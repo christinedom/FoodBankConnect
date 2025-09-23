@@ -20,9 +20,9 @@
   Our project will provide a hub where underserved communities can find nearby food banks and programs, while volunteers and donors can discover ways to contribute their time, and/or money. We'll have real-time food bank listings, distribution programs, and volunteer/donor opportunities.
 
 - **URLs of at least three data sources that you will programmatically scrape (at least one must be a RESTful API):**  
-  1. https://developer.volunteermatch.org/  
-  2. https://www.centraltexasfoodbank.org/find-food  
-  3. https://www.austintexas.gov/department/food-access  
+  1. https://developers.volunteermatch.org/
+  2. https://www.centraltexasfoodbank.org/food-assistance/get-food-now
+  3. https://www.austintexas.gov/page/get-help-food-access-today
 
 - **At least three models:**  
   1. Food Banks / Pantries  
