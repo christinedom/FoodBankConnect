@@ -73,7 +73,7 @@
   3. How can I contribute (donate or volunteer) to help underserved communities?  
 
 - **Repository URL:**  
-  https://gitlab.com/cs373-fall-2025-55085_07  
+  https://gitlab.com/OdinLimaye/cs373-fall-2025-55085_07  
 
 ---
 
@@ -87,8 +87,8 @@
 
 ## Phase One
 - **Git SHA:**  
-- **Project Leader:**  
-  - Responsibilities:  
+- **Project Leader: Odin Limaye**  
+  - Responsibilities: Setting up the project initially and delegating tasks
 - **GitLab Pipelines:**  
 - **Website:**  
 
