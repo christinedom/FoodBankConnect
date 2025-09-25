@@ -84,7 +84,7 @@
 | Francisco Vivas | fv3836 | dafrancc    |  
 | Christine Dominic |        |             |  
 | Mahika Dawar      |        |             |  
-| Jose Lopez        |        |             |  
+| Jose Lopez        | jl82838 |  j-o-lopez  |  
 
 ---  
 
@@ -102,7 +102,7 @@
 | Francisco Vivas   | 11.5            |              |  
 | Christine Dominic |                 |              |  
 | Mahika Dawar      |                 |              |  
-| Jose Lopez        |                 |              |  
+| Jose Lopez        | 12              |              |  
 
 **Comments:**  
 
