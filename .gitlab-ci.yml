@@ -5,9 +5,13 @@ deploy_website:
   stage: deploy
   image: amazon/aws-cli:2.15.5
   script:
-    - aws --version
-    - aws sts get-caller-identity
-    - aws s3 sync public/ "s3://$S3_BUCKET" --delete
-    - aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DIST_ID" --paths "/*"
+    # Sync local "public/" folder with S3 bucket
+    - aws s3 sync public/ s3://$AWS_BUCKET_NAME --region $AWS_DEFAULT_REGION --delete
+
+    # Invalidate CloudFront cache so new content shows immediately
+    - aws cloudfront create-invalidation \
+        --distribution-id $CLOUDFRONT_DIST_ID \
+        --paths "/*"
+
   only:
-    - main
+    - main   # run this job only on pushes to the main branch
