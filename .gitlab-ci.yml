@@ -3,9 +3,8 @@ stages:
 
 deploy_website:
   stage: deploy
-  image: amazon/aws-cli:2.15.5
+  image: amazon/aws-cli
   script:
+    - aws --version
     - aws s3 sync public/ s3://$AWS_BUCKET_NAME --delete
     - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DIST_ID --paths "/*"
-  only:
-    - main
