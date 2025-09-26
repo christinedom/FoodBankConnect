@@ -5,8 +5,18 @@ deploy_website:
   stage: deploy
   image: amazon/aws-cli:2.15.5
   script:
-    - aws --version
-    - aws s3 sync public/ s3://foodbankconnect.me --delete
-    - aws cloudfront create-invalidation --distribution-id E116FMVNVTQTZ7 --paths "/*"
+    # Configure AWS CLI with GitLab CI/CD variables
+    - aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+    - aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+    - aws configure set default.region "$AWS_DEFAULT_REGION"
+
+    # Sync local "public/" folder with S3 bucket
+    - aws s3 sync public/ "s3://$S3_BUCKET" --delete
+
+    # Invalidate CloudFront cache so new content shows immediately
+    - aws cloudfront create-invalidation \
+        --distribution-id "$CLOUDFRONT_DIST_ID" \
+        --paths "/*"
+
   only:
-    - main
+    - main   # run this job only on pushes to the main branch
