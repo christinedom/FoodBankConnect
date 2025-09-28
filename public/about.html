@@ -65,7 +65,7 @@
         const PROJECT = "74614252";
         const USER = "29883443";
         const COMMITS = 'https://gitlab.com/api/v4/projects/${PROJECT}/repository/commits?author_id=${USER}';
-        const ISSUES = 'https://gitlab.com/api/v4/projects/${PROJECT_ID}/issues?author_id=${USER_ID}';
+        const ISSUES = 'https://gitlab.com/api/v4/projects/${PROJECT}/issues?author_id=${USER}';
 
         fetch(COMMITS)
             .then(function(raw_http) {
