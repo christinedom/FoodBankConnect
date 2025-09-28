@@ -126,38 +126,38 @@
 
         // Array of each team member's first name and GitLab user ID
         var team = [
-            {name: "Odin", user: "29883443"},
-            {name: "Mahika", user: "30052392"},
-            {name: "Jose", user: "29919402"},
-            {name: "Christine", user: ""},
-            {name: "Francisco", user: ""},
+            {firstName: "Odin", gitName: "Odin Limaye", userID: "29883443"},
+            {firstName: "Mahika", gitName: "Mahika Dawar", userID: "30052392"},
+            {firstName: "Jose", gitName: "j-o-lopez", userID: "29919402"},
+            {firstName: "Christine", gitName: "", userID: ""},
+            {firstName: "Francisco", gitName: "", userID: ""},
         ];
 
-        for (var i = 0; i < 3; i++) {
+        for (var i = 0; i < team.length; i++) {
             (function(member) {
-                const COMMITS = `https://gitlab.com/api/v4/projects/${PROJECT}/repository/commits?author_id=${member.user}`;
-                const ISSUES = `https://gitlab.com/api/v4/projects/${PROJECT}/issues?author_id=${member.user}`;
+                const COMMITS = `https://gitlab.com/api/v4/projects/${PROJECT}/repository/commits?author_name=${member.gitName}`;
+                const ISSUES = `https://gitlab.com/api/v4/projects/${PROJECT}/issues?author_id=${member.userID}`;
 
                 // Get the current member's commits
                 fetch(COMMITS)
                     .then(raw_http => raw_http.json())
                     .then(json_commits => {
-                        document.getElementById(`${member.name}Commits`).textContent = `${member.name}: ${json_commits.length}`;
+                        document.getElementById(`${member.firstName}Commits`).textContent = json_commits.length;
                     })
                     .catch(error => {
                         console.error("Error fetching commits: ", error);
-                        document.getElementById(`${member.name}Commits`).textContent = "Error fetching commits";
+                        document.getElementById(`${member.firstName}Commits`).textContent = "Error fetching commits";
                     });
 
                 // Get the current member's issues
                 fetch(ISSUES)
                     .then(raw_http => raw_http.json())
                     .then(json_issues => {
-                        document.getElementById(`${member.name}Issues`).textContent = `${member.name}: ${json_issues.length}`;
+                        document.getElementById(`${member.firstName}Issues`).textContent = json_issues.length;
                     })
                     .catch(error => {
                         console.error("Error fetching issues: ", error);
-                        document.getElementById(`${member.name}Issues`).textContent = "Error fetching issues";
+                        document.getElementById(`${member.firstName}Issues`).textContent = "Error fetching issues";
                     });
             })(team[i]);
         }
