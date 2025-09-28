@@ -85,7 +85,7 @@
 | Odin Limaye      | oal355 | OdinLimaye       |  
 | Francisco Vivas  | fv3836 | dafrancc         |  
 | Christine Dominic| cd37728| christinedominic |  
-| Mahika Dawar     |        |                  |  
+| Mahika Dawar     | md44935| mahikad          |  
 | Jose Lopez       | jl82838|  j-o-lopez       |  
 
 ---  
@@ -103,7 +103,7 @@
 | Odin Limaye       | 11.5            |              |  
 | Francisco Vivas   | 11.5            |              |  
 | Christine Dominic | 12.0            |              |  
-| Mahika Dawar      |                 |              |  
+| Mahika Dawar      | 12              |              |  
 | Jose Lopez        | 12              |              |  
 
 **Comments:**  
