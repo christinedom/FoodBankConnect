@@ -126,16 +126,16 @@
 
         // Array of each team member's first name and GitLab user ID
         var team = [
-            {firstName: "Odin", gitName: "Odin Limaye", userID: "29883443"},
-            {firstName: "Mahika", gitName: "Mahika Dawar", userID: "30052392"},
-            {firstName: "Jose", gitName: "j-o-lopez", userID: "29919402"},
-            {firstName: "Christine", gitName: "", userID: ""},
-            {firstName: "Francisco", gitName: "", userID: ""},
+            {firstName: "Odin", email: "odin@cs.utexas.edu", userID: "29883443"},
+            {firstName: "Mahika", email: "mahika.dawar@utexas.edu", userID: "30052392"},
+            {firstName: "Jose", email: "jl82838@utexas.edu", userID: "29919402"},
+            {firstName: "Christine", email: "cdominic@cs.utexas.edu", userID: ""},
+            {firstName: "Francisco", email: "ceo@dafrancc.com", userID: ""},
         ];
 
         for (var i = 0; i < team.length; i++) {
             (function(member) {
-                const COMMITS = `https://gitlab.com/api/v4/projects/${PROJECT}/repository/commits?author_name=${member.gitName}`;
+                const COMMITS = `https://gitlab.com/api/v4/projects/${PROJECT}/repository/commits?author_email=${encodeURIComponent(member.email)}`;
                 const ISSUES = `https://gitlab.com/api/v4/projects/${PROJECT}/issues?author_id=${member.userID}`;
 
                 // Get the current member's commits
