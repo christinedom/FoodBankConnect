@@ -5,6 +5,91 @@
     <title>About</title>
 </head>
 <body>
-    <h1>About</h1>
+    <h1>About the Site</h1>
+
+    <h1>Meet the Team</h1>
+    <table id = "Team Members">
+        <tr>
+            <th>
+                Name
+            </th>
+            <th>
+                Photo
+            </th>
+            <th>
+                Bio
+            </th>
+            <th>
+                Major Responsibilities
+            </th>
+            <th>
+                Number of Commits
+            </th>
+            <th>
+                Number of Issues
+            </th>
+            <th>
+                Number of Unit Tests
+            </th>
+        </tr>
+        <tr id = "Odin">
+            <td>
+                Odin Limaye
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td id = "Odin Commits">
+            </td>
+            <td id = "Odin Issues">
+            </td>
+            <td>
+                0
+            </td>
+        </tr>
+    </table>
+
+    <h1>Data Sources</h1>
+
+    <h1>Tools Used</h1>
+
+    <h1>Links Used</h1>
+
+    <script>
+        const PROJECT = "74614252";
+        const USER = "29883443";
+        const COMMITS = 'https://gitlab.com/api/v4/projects/${PROJECT}/repository/commits?author_id=${USER}';
+        const ISSUES = 'https://gitlab.com/api/v4/projects/${PROJECT_ID}/issues?author_id=${USER_ID}';
+
+        fetch(COMMITS)
+            .then(function(raw_http) {
+                return raw_http.json();
+            })
+            .then(function(json_commits) {
+                document.getElementById("Odin Commits").textContent = json_commits.length;
+            })
+            .catch(function(error) {
+                console.error("Error fetching commits: ", error);
+                document.getElementById("Odin Commits").textContent = "Error fetching commits; refresh the page to try again.";
+            })
+
+        fetch(ISSUES)
+            .then(function(raw_http) {
+                return raw_http.json();
+            })
+            .then(function(json_issues) {
+                document.getElementById("Odin Issues").textContent = json_issues.length;
+            })
+            .catch(function(error) {
+                console.error("Error fetching issues: ", error);
+                document.getElementById("Odin Issues").textContent = "Error fetching issues; refresh the page to try again.";
+            })
+    </script>
 </body>
 </html>
