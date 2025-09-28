@@ -46,8 +46,102 @@
                 Coming soon 
             </td>
             <td id = "Odin Commits">
+                Loading...
             </td>
             <td id = "Odin Issues">
+                Loading...
+            </td>
+            <td>
+                0
+            </td>
+        </tr>
+        <tr id = "Francisco">
+            <td>
+                Francisco Vivas
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td id = "Francisco Commits">
+                Loading...
+            </td>
+            <td id = "Francisco Issues">
+                Loading...
+            </td>
+            <td>
+                0
+            </td>
+        </tr>
+        <tr id = "Mahika">
+            <td>
+                Mahika Dawar
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td id = "Mahika Commits">
+                Loading...
+            </td>
+            <td id = "Mahika Issues">
+                Loading...
+            </td>
+            <td>
+                0
+            </td>
+        </tr>
+        <tr id = "Jose">
+            <td>
+                Jose Lopez
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td id = "Jose Commits">
+                Loading...
+            </td>
+            <td id = "Jose Issues">
+                Loading...
+            </td>
+            <td>
+                0
+            </td>
+        </tr>
+        <tr id = "Christine">
+            <td>
+                Christine Dominic
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td>
+                Coming soon 
+            </td>
+            <td id = "Christine Commits">
+                Loading...
+            </td>
+            <td id = "Christine Issues">
+                Loading...
             </td>
             <td>
                 0
@@ -62,34 +156,48 @@
     <h1>Links Used</h1>
 
     <script>
+        // Our repo's project ID
         const PROJECT = "74614252";
-        const USER = "29883443";
-        const COMMITS = `https://gitlab.com/api/v4/projects/${PROJECT}/repository/commits?author_id=${USER}`;
-        const ISSUES = `https://gitlab.com/api/v4/projects/${PROJECT}/issues?author_id=${USER}`;
 
-        fetch(COMMITS)
-            .then(function(raw_http) {
-                return raw_http.json();
-            })
-            .then(function(json_commits) {
-                document.getElementById("Odin Commits").textContent = json_commits.length;
-            })
-            .catch(function(error) {
-                console.error("Error fetching commits: ", error);
-                document.getElementById("Odin Commits").textContent = "Error fetching commits; refresh the page to try again.";
-            })
+        // Array of each team member's first name and GitLab user ID
+        var team = [
+            {name: "Odin", user: "29883443"},
+            {name: "Mahika", user: ""},
+            {name: "Christine", user: ""},
+            {name: "Jose", user: ""},
+            {name: "Francisco", user: ""},
+        ]
 
-        fetch(ISSUES)
-            .then(function(raw_http) {
-                return raw_http.json();
-            })
-            .then(function(json_issues) {
-                document.getElementById("Odin Issues").textContent = json_issues.length;
-            })
-            .catch(function(error) {
-                console.error("Error fetching issues: ", error);
-                document.getElementById("Odin Issues").textContent = "Error fetching issues; refresh the page to try again.";
-            })
+        for (var i = 0; i < team.length; i++) {
+            (function(USER) {
+                const COMMITS = `https://gitlab.com/api/v4/projects/${PROJECT}/repository/commits?author_id=${USER}`;
+                const ISSUES = `https://gitlab.com/api/v4/projects/${PROJECT}/issues?author_id=${USER}`;
+
+                fetch(COMMITS)
+                    .then(function(raw_http) {
+                        return raw_http.json();
+                    })
+                    .then(function(json_commits) {
+                        document.getElementById(`${USER} Commits`).textContent = json_commits.length;
+                    })
+                    .catch(function(error) {
+                        console.error("Error fetching commits: ", error);
+                        document.getElementById(`${USER} Commits`).textContent = "Error fetching commits; refresh the page to try again.";
+                    })
+
+                fetch(ISSUES)
+                    .then(function(raw_http) {
+                        return raw_http.json();
+                    })
+                    .then(function(json_issues) {
+                        document.getElementById(`${USER} Issues`).textContent = json_issues.length;
+                    })
+                    .catch(function(error) {
+                        console.error("Error fetching issues: ", error);
+                        document.getElementById(`${USER} Issues`).textContent = "Error fetching issues; refresh the page to try again.";
+                    })
+            })(team[i].user)
+        }
     </script>
 </body>
 </html>
