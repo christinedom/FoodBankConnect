@@ -20,9 +20,11 @@
 
 - **URLs of at least three data sources that you will programmatically scrape (at least one must be a RESTful API):**  
   1. https://fdc.nal.usda.gov/api-guide  
-  2. https://www.centraltexasfoodbank.org/food-assistance/get-food-now  
-  3. https://www.austintexas.gov/page/get-help-food-access-today  
-  4. https://projects.propublica.org/nonprofits/api  
+  2. https://mealconnect.docs.apiary.io/#
+  3. https://www.givefood.org.uk/api/
+  4. https://www.centraltexasfoodbank.org/food-assistance/get-food-now  
+  5. https://www.austintexas.gov/page/get-help-food-access-today  
+  6. https://projects.propublica.org/nonprofits/api  
 
 - **At least three models:**  
   1. Food Banks and Food Pantries  
@@ -91,9 +93,9 @@
 ## Phase One
 - **Git SHA:**  
 - **Project Leader: Odin Limaye**  
-  - Responsibilities: Setting up the project initially and delegating tasks  
+  - Responsibilities: Setting up the project and website initially and delegating tasks  
 - **GitLab Pipelines:**  
-- **Website:**  
+- **Website: foodbankconnect.me**  
 
 ### Time Tracking
 | Member            | Estimated Hours | Actual Hours |  
