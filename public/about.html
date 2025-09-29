@@ -8,6 +8,14 @@
     <link 
       href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/simplex/bootstrap.min.css" 
       rel="stylesheet">
+
+    <!-- Custom CSS to scale team member photos automatically -->
+    <style>
+        #TeamMembers img {
+            display: block; /* keeps photos small */
+            height: auto;   /* keeps proportions */
+        }
+    </style>
 </head>
 <body class="bg-light">
 
@@ -51,16 +59,21 @@
                 <tbody>
                     <tr id="Odin">
                         <td>Odin Limaye</td>
-                        <td>Coming soon</td>
-                        <td>Coming soon</td>
-                        <td>Coming soon</td>
+                        <td><img src="images/OdinPortrait.jpg" alt="Odin Limaye" class="img-fluid"></td>
+                        <td>I'm a Junior at UT Austin, and I'm majoring in Math and Computer Science.
+                            In my free time, I like reading books, gardening, and hiking. You can find 
+                            out more about me at my personal website: <a href="https://odinlimaye.com">odinlimaye.com</a>.
+                        </td>
+                        <td>So far, my main responsibilities have been handling our site's domain name and hosting 
+                            it on Amazon Web Services, along with front-end web development involving the GitLab API.
+                        </td>
                         <td id="OdinCommits">Loading...</td>
                         <td id="OdinIssues">Loading...</td>
                         <td>0</td>
                     </tr>
                     <tr id="Francisco">
                         <td>Francisco Vivas</td>
-                        <td>Coming soon</td>
+                        <td><img src="images/placeholder.jpg" alt="Francisco Vivas" class="img-fluid"></td>
                         <td>Coming soon</td>
                         <td>Coming soon</td>
                         <td id="FranciscoCommits">Loading...</td>
@@ -69,7 +82,7 @@
                     </tr>
                     <tr id="Mahika">
                         <td>Mahika Dawar</td>
-                        <td>Coming soon</td>
+                        <td><img src="images/placeholder.jpg" alt="Mahika Dawar" class="img-fluid"></td>
                         <td>Coming soon</td>
                         <td>Coming soon</td>
                         <td id="MahikaCommits">Loading...</td>
@@ -78,7 +91,7 @@
                     </tr>
                     <tr id="Jose">
                         <td>Jose Lopez</td>
-                        <td>Coming soon</td>
+                        <td><img src="images/placeholder.jpg" alt="Jose Lopez" class="img-fluid"></td>
                         <td>Coming soon</td>
                         <td>Coming soon</td>
                         <td id="JoseCommits">Loading...</td>
@@ -87,7 +100,7 @@
                     </tr>
                     <tr id="Christine">
                         <td>Christine Dominic</td>
-                        <td>Coming soon</td>
+                        <td><img src="images/placeholder.jpg" alt="Christine Dominic" class="img-fluid"></td>
                         <td>Coming soon</td>
                         <td>Coming soon</td>
                         <td id="ChristineCommits">Loading...</td>
@@ -120,6 +133,6 @@
     </script>
 
     <!-- Original JavaScript Logic -->
-    <script src = "commitsAndIssues.js" defer></script>
+    <script src="commitsAndIssues.js" defer></script>
 </body>
 </html>

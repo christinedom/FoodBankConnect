@@ -1,6 +1,4 @@
-# Project README  
-
-## Project Setup Prompts  
+# Project Proposal  
 
 - **Canvas / Slack group number:**  
   55085_07  
@@ -86,15 +84,15 @@
 | Francisco Vivas  | fv3836 | dafrancc         |  
 | Christine Dominic| cd37728| christinedominic |  
 | Mahika Dawar     | md44935| mahikad          |  
-| Jose Lopez       | jl82838|  j-o-lopez       |  
+| Jose Lopez       | jl82838| j-o-lopez        |  
 
 ---  
 
 ## Phase One
 - **Git SHA:**  
 - **Project Leader: Odin Limaye**  
-  - Responsibilities: Setting up the project and website initially and delegating tasks  
-- **GitLab Pipelines:**  
+  - Responsibilities: Setting up the project repository, domain name, AWS hosting, and delegating tasks. 
+- **GitLab Pipelines: https://gitlab.com/OdinLimaye/cs373-fall-2025-55085_07/-/pipelines**  
 - **Website: foodbankconnect.me**  
 
 ### Time Tracking
