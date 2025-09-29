@@ -1,0 +1,68 @@
+// Our repo's project ID and per page constant
+const PROJECT = "74614252";
+const PER_PAGE = 100;
+
+// Array of each team member's first name, GiLab email, and GitLab user ID
+const team = [
+    {firstName: "Odin", email: "odin@cs.utexas.edu", userID: "29883443", commits: 0},
+    {firstName: "Mahika", email: "mahika.dawar@utexas.edu", userID: "30052392", commits: 0},
+    {firstName: "Jose", email: "jl82838@utexas.edu", userID: "29919402", commits: 0},
+    {firstName: "Christine", email: "cdominic@cs.utexas.edu", userID: "", commits: 0},
+    {firstName: "Francisco", email: "ceo@dafrancc.com", userID: "", commits: 0},
+];
+
+// Handles displaying each member's number of issues
+async function getIssues(PROJECT, PER_PAGE, team) {
+    // Get the number of issues per author
+    for (let i = 0; i < team.length; i++) {
+        let json_issues = [];
+        let page = 1;
+        let count = 0;
+
+        // Get issues in groupings of 100 per page
+        do {
+            const ISSUES = `https://gitlab.com/api/v4/projects/${PROJECT}/issues?author_id=${team[i].userID}&per_page=${PER_PAGE}&page=${page}`;
+            const raw_http = await fetch(ISSUES);
+            json_issues = await raw_http.json();
+
+            count += json_issues.length;
+            page++;
+        } while (json_issues.length === PER_PAGE)
+
+        // Display the data on the html file
+        document.getElementById(`${team[i].firstName}Issues`).textContent = count;
+    }
+}
+
+// Handles displaying each member's number of commits
+async function getCommits(PROJECT, PER_PAGE, team) {
+    let json_commits = [];
+    let page = 1;
+
+    do {
+        // Get commits from all members in groupings of 100 per page
+        const COMMITS = `https://gitlab.com/api/v4/projects/${PROJECT}/repository/commits?per_page=${PER_PAGE}&page=${page}`;
+        const raw_http = await fetch(COMMITS);
+        json_commits = await raw_http.json();
+        
+        // Count up the commits from each member for this page
+        for (let i = 0; i < json_commits.length; i++) {
+            const current_email = json_commits[i].author_email;
+            for (let j = 0; j < team.length; j++) {
+                if (team[j].email === current_email) {
+                    team[j].commits++;
+                    break;
+                }
+            }
+        }
+
+        page++;
+    } while (json_commits.length === PER_PAGE)
+
+    for (let i = 0; i < team.length; i++) {
+        // Display each member's number of commits on the html page
+        document.getElementById(`${team[i].firstName}Commits`).textContent = team[i].commits;
+    }
+}
+
+Promise.all([getIssues(PROJECT, PER_PAGE, team), getCommits(PROJECT, PER_PAGE, team)]);
