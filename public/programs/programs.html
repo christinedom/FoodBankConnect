@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Programs - FoodBankConnect</title>
+
+  <!-- Morph Bootstrap Theme -->
+  <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/morph/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    .filter-btn {
+      margin: 0.25rem;
+    }
+    .card-img-top {
+      height: 180px;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">FoodBankConnect</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="foodbanks.html">Food Banks</a></li>
+          <li class="nav-item"><a class="nav-link active" href="programs.html">Programs</a></li>
+          <li class="nav-item"><a class="nav-link" href="sponsors.html">Sponsors</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Header -->
+  <header class="py-5 text-center bg-white">
+    <div class="container">
+      <h1 class="display-4 fw-bold">Programs & Volunteer Opportunities</h1>
+      <p class="lead">Explore how you can participate or benefit from local food programs.</p>
+    </div>
+  </header>
+
+  <!-- Filters -->
+  <div class="text-center my-3">
+    <button class="btn btn-outline-secondary filter-btn" onclick="filterCards('all')">All</button>
+    <button class="btn btn-outline-secondary filter-btn" onclick="filterCards('distribution')">Distribution</button>
+    <button class="btn btn-outline-secondary filter-btn" onclick="filterCards('volunteer')">Volunteer</button>
+    <button class="btn btn-outline-secondary filter-btn" onclick="filterCards('class')">Class</button>
+    <button class="btn btn-outline-secondary filter-btn" onclick="filterCards('service')">Service</button>
+  </div>
+
+  <!-- Program Cards -->
+  <main class="container">
+    <div class="row g-4">
+
+      <!-- Program 1 -->
+      <div class="col-md-6 col-lg-3 program-card distribution">
+        <div class="card h-100 shadow-sm">
+          <img src="images/drive-thru-food-pantry.jpg" class="card-img-top" alt="Drive-thru food pantry">
+          <div class="card-body">
+            <h5 class="card-title">Drive-Thru Food Pantry</h5>
+            <p><strong>Type:</strong> Distribution<br>
+              <strong>Eligibility:</strong> Open<br>
+              <strong>Frequency:</strong> Weekly<br>
+              <strong>Cost:</strong> Free<br>
+              <strong>Host:</strong> Nonprofit</p>
+            <a href="#" class="btn btn-success w-100">Sign Up</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Program 2 -->
+      <div class="col-md-6 col-lg-3 program-card volunteer">
+        <div class="card h-100 shadow-sm">
+          <img src="images/food-bank-volunteer.jpg" class="card-img-top" alt="Volunteers at a food bank">
+          <div class="card-body">
+            <h5 class="card-title">Volunteer with Us</h5>
+            <p><strong>Type:</strong> Volunteer<br>
+              <strong>Eligibility:</strong> Open<br>
+              <strong>Frequency:</strong> One-time or recurring<br>
+              <strong>Cost:</strong> Free<br>
+              <strong>Host:</strong> Church</p>
+            <a href="#" class="btn btn-success w-100">Sign Up</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Program 3 -->
+      <div class="col-md-6 col-lg-3 program-card class">
+        <div class="card h-100 shadow-sm">
+          <img src="images/cooking-case.png" class="card-img-top" alt="Cooking class demo">
+          <div class="card-body">
+            <h5 class="card-title">Nutrition & Cooking Class</h5>
+            <p><strong>Type:</strong> Class<br>
+              <strong>Eligibility:</strong> Income-based<br>
+              <strong>Frequency:</strong> Monthly<br>
+              <strong>Cost:</strong> Varies based on need<br>
+              <strong>Host:</strong> City Health Dept.</p>
+            <a href="#" class="btn btn-success w-100">Sign Up</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Program 4 -->
+      <div class="col-md-6 col-lg-3 program-card service">
+        <div class="card h-100 shadow-sm">
+          <img src="images/food-bank-delivery.jpg" class="card-img-top" alt="Food delivery box">
+          <div class="card-body">
+            <h5 class="card-title">Home Delivery Service</h5>
+            <p><strong>Type:</strong> Service<br>
+              <strong>Eligibility:</strong> Referral-based<br>
+              <strong>Frequency:</strong> Weekly<br>
+              <strong>Cost:</strong> Free<br>
+              <strong>Host:</strong> Nonprofit</p>
+            <a href="#" class="btn btn-success w-100">Sign Up</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center mt-5 py-3 bg-primary text-white">
+    &copy; 2025 FoodBankConnect
+  </footer>
+
+  <!-- JS for filtering -->
+  <script>
+    function filterCards(type) {
+      const cards = document.querySelectorAll('.program-card');
+      cards.forEach(card => {
+        if (type === 'all' || card.classList.contains(type)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
