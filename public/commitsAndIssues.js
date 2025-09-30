@@ -4,22 +4,22 @@ const PER_PAGE = 100;
 
 // Array of each team member's first name, GiLab email, and GitLab user ID
 const team = [
-    {firstName: "Odin", email: "odin@cs.utexas.edu", userID: "29883443", commits: 0},
-    {firstName: "Mahika", email: "mahika.dawar@utexas.edu", userID: "30052392", commits: 0},
-    {firstName: "Jose", email: "jl82838@utexas.edu", userID: "29919402", commits: 0},
-    {firstName: "Christine", email: "cdominic@cs.utexas.edu", userID: "30022393", commits: 0},
-    {firstName: "Francisco", email: "ceo@dafrancc.com", userID: "25760273", commits: 0},
+    {firstName: "Odin", email: "odin@cs.utexas.edu", userID: "29883443", commits: 0, issues_closed: 0},
+    {firstName: "Mahika", email: "mahika.dawar@utexas.edu", userID: "30052392", commits: 0, issues_closed: 0},
+    {firstName: "Jose", email: "jl82838@utexas.edu", userID: "29919402", commits: 0, issues_closed: 0},
+    {firstName: "Christine", email: "cdominic@cs.utexas.edu", userID: "30022393", commits: 0, issues_closed: 0},
+    {firstName: "Francisco", email: "ceo@dafrancc.com", userID: "25760273", commits: 0, issues_closed: 0},
 ];
 
-// Handles displaying each member's number of issues
-async function getIssues(PROJECT, PER_PAGE, team) {
-    // Get the number of issues per author
+// Handles displaying each member's number of issues opened
+async function getIssuesOpened(PROJECT, PER_PAGE, team) {
+    // Get all of the issues opened by each different author
     for (let i = 0; i < team.length; i++) {
         let json_issues = [];
         let page = 1;
         let count = 0;
 
-        // Get issues in groupings of 100 per page
+        // Get issues in groupings of PER_PAGE per page
         do {
             const ISSUES = `https://gitlab.com/api/v4/projects/${PROJECT}/issues?author_id=${team[i].userID}&per_page=${PER_PAGE}&page=${page}`;
             const raw_http = await fetch(ISSUES);
@@ -30,7 +30,39 @@ async function getIssues(PROJECT, PER_PAGE, team) {
         } while (json_issues.length === PER_PAGE)
 
         // Display the data on the html file
-        document.getElementById(`${team[i].firstName}Issues`).textContent = count;
+        document.getElementById(`${team[i].firstName}IssuesOpened`).textContent = count;
+    }
+}
+
+// Handles displaying each member's number of issues closed
+async function getIssuesClosed(PROJECT, PER_PAGE, team) {
+    // Tally up how many issues each author closed
+    let json_issues = [];
+    let page = 1;
+
+    // Go through issues in groupings of PER_PAGE per page
+    do {
+        const CLOSED = `https://gitlab.com/api/v4/projects/${PROJECT}/issues?state=closed&per_page=${PER_PAGE}&page=${page}`;
+        const raw_http = await fetch(CLOSED);
+        json_issues = await raw_http.json();
+
+        for (let i = 0; i < json_issues.length; i++) {
+            for (let j = 0; j < team.length; j++) {
+                // The closed_by field might be null if the issue was auto-closed
+                if (json_issues[i].closed_by != null && String(json_issues[i].closed_by.id) === team[j].userID) {
+                    // Found it and can move on to the next issue
+                    team[j].issues_closed++;
+                    break;
+                }
+            }
+        }
+
+        page++;
+    } while (json_issues.length === PER_PAGE)
+
+    // Update the number of issues closed per author after all issues have been checked
+    for (let i = 0; i < team.length; i++) {
+        document.getElementById(`${team[i].firstName}IssuesClosed`).textContent = team[i].issues_closed;
     }
 }
 
@@ -59,10 +91,12 @@ async function getCommits(PROJECT, PER_PAGE, team) {
         page++;
     } while (json_commits.length === PER_PAGE)
 
+    // Display each member's number of commits on the html page
     for (let i = 0; i < team.length; i++) {
-        // Display each member's number of commits on the html page
         document.getElementById(`${team[i].firstName}Commits`).textContent = team[i].commits;
     }
 }
 
-Promise.all([getIssues(PROJECT, PER_PAGE, team), getCommits(PROJECT, PER_PAGE, team)]);
+Promise.all([getIssuesOpened(PROJECT, PER_PAGE, team), 
+             getIssuesClosed(PROJECT, PER_PAGE, team), 
+             getCommits(PROJECT, PER_PAGE, team)]);
