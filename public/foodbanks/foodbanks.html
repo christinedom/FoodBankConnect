@@ -60,20 +60,17 @@
 
         <!-- Cards -->
         <main class="container my-5">
+            <div id="entry-count" class="mb-4 text-muted"></div>
             <div class="row g-4">
                 <!-- Central Texas Food Bank -->
                 <div class="col-md-4">
                     <div class="card h-100 shadow-sm">
-                        <img
-                            src="/images/central-austin-food-pantry.jpg"
-                            class="card-img-top"
-                            alt="Central Texas Food Bank"
-                        />
                         <div class="card-body">
                             <h5 class="card-title">Central Texas Food Bank</h5>
                             <p class="card-text">
-                                Location: 6500 Metropolis Dr, Austin, TX
-                                78744<br />
+                                Location: 6500 Metropolis Dr<br />
+                                City: Austin, Texas<br />
+                                ZIP Code: 78744<br />
                                 Capacity: Over 50,000 meals/week<br />
                                 Hours: Mon–Fri, 8am–5pm<br />
                                 Urgency: Very High
@@ -99,15 +96,12 @@
                 <!-- Hope Food Pantry -->
                 <div class="col-md-4">
                     <div class="card h-100 shadow-sm">
-                        <img
-                            src="/images/hope-food-pantry.jpg"
-                            class="card-img-top"
-                            alt="Hope Food Pantry"
-                        />
                         <div class="card-body">
                             <h5 class="card-title">Hope Food Pantry Austin</h5>
                             <p class="card-text">
-                                Location: 4001 Speedway, Austin, TX 78751<br />
+                                Location: 4001 Speedway <br />
+                                City: Austin, Texas <br />
+                                ZIP Code: 78751<br />
                                 Capacity: ~800 meals/week<br />
                                 Hours: Fri, 9am–11:30am (by appt)<br />
                                 Urgency: Medium
@@ -133,17 +127,14 @@
                 <!-- St. Ignatius Martyr -->
                 <div class="col-md-4">
                     <div class="card h-100 shadow-sm">
-                        <img
-                            src="/images/st-ignatius.jpg"
-                            class="card-img-top"
-                            alt="St. Ignatius Martyr Food Pantry"
-                        />
                         <div class="card-body">
                             <h5 class="card-title">
                                 St. Ignatius Martyr Food Pantry
                             </h5>
                             <p class="card-text">
-                                Location: 126 W Oltorf St, Austin, TX 78704<br />
+                                Address: 126 W Oltorf St<br />
+                                City: Austin, Texas <br />
+                                ZIP Code: 78704<br />
                                 Capacity: ~1,000 meals/week<br />
                                 Hours: Mon–Wed 9am–1pm, Thu 9–11am<br />
                                 Urgency: High
@@ -174,5 +165,17 @@
         </footer>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                // Count how many .card elements exist in the row
+                const cards = document.querySelectorAll(".row.g-4 .card");
+                const countDiv = document.getElementById("entry-count");
+
+                // Update the text with the count
+                countDiv.textContent = `Showing ${cards.length} Food Banks`;
+            });
+        </script>
+
     </body>
 </html>

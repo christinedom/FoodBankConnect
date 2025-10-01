@@ -27,7 +27,7 @@ wouldn't have known. We weren't aware of how exactly Promises and parallel/async
 until an AI recommended we make use of these concepts as an optional way to improve our already-correct 
 code's efficiency. We then inquired as to the logic behind these mysteriously powerful tools in JavaScript, and 
 AI explained the concepts to us. AI also helped format our CSS and HTML by giving suggestions on proper spacing 
-and indentation for various tags - <p>, <h>, etc. This helped our code become more readable and easy-on-the-eye.
+and indentation for various tags - paragraphs, headers, etc. This helped our code become more readable and easy-on-the-eye.
 
 ## Alternative approaches
 AI provided us with one alternative approach in particular that ended up being very useful. Originally, we were
@@ -68,8 +68,11 @@ AI. This led us to the GitLab documentation, which cleared things up.
 
 ## Paste a before-and-after snippet showing where you changed your own code in response to AI guidance.
 Before:
+
 getIssuesOpened(PROJECT, PER_PAGE, team);
+
 getIssuesClosed(PROJECT, PER_PAGE, team);
+
 getCommits(PROJECT, PER_PAGE, team);
 
 
