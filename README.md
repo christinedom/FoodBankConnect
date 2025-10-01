@@ -23,6 +23,7 @@
   4. https://www.centraltexasfoodbank.org/food-assistance/get-food-now  
   5. https://www.austintexas.gov/page/get-help-food-access-today  
   6. https://projects.propublica.org/nonprofits/api  
+  7. https://www.findhelp.org
 
 - **At least three models:**  
   1. Food Banks and Food Pantries  
