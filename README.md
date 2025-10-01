@@ -94,7 +94,7 @@
 - **Project Leader: Odin Limaye**  
   - Responsibilities: Setting up the project repository, domain name, AWS hosting, and delegating tasks. 
 - **GitLab Pipelines: https://gitlab.com/OdinLimaye/cs373-fall-2025-55085_07/-/pipelines**  
-- **Website: foodbankconnect.me**  
+- **Website: https://foodbankconnect.me**  
 
 ### Time Tracking
 | Member            | Estimated Hours | Actual Hours |  
