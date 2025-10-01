@@ -21,6 +21,12 @@
         height: 100%;
         border: 0;
       }
+      .foodbank-photo {
+        width: 100%;
+        height: auto;
+        margin-top: 15px;
+        border-radius: 6px;
+      }
     </style>
   </head>
   <body class="bg-light">
@@ -70,12 +76,24 @@
           <ul>
             <li><strong>Location:</strong> 126 W Oltorf St, Austin, TX 78704</li>
             <li><strong>Capacity:</strong> ~1,000 meals/week</li>
-            <li>
-              <strong>Hours:</strong> Mon–Wed 9am–1pm, Thu 9–11am
-            </li>
+            <li><strong>Hours:</strong> Mon–Wed 9am–1pm, Thu 9–11am</li>
             <li><strong>Urgency:</strong> High</li>
+            <li>
+              <strong>Website:</strong>
+              <a href="https://st-ignatius.org/food-pantry" target="_blank">
+                st-ignatius.org/food-pantry
+              </a>
+            </li>
           </ul>
 
+          <!-- Photo -->
+          <img
+            src="../images/st-ignatius.jpg"
+            alt="St. Ignatius Martyr Food Pantry"
+            class="foodbank-photo shadow-sm"
+          />
+
+          <!-- Map -->
           <div class="map-container mt-3">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3449.379978503797!2d-97.7559276848897!3d30.24113988181356!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8644b4dd0135d7e3%3A0x48f6d43c3b7e3540!2sSt.%20Ignatius%20Martyr%20Catholic%20Church!5e0!3m2!1sen!2sus!4v1695933190387"
@@ -120,9 +138,7 @@
                   Hours: Fri 9am–11:30am (appt)<br />
                   Urgency: Medium
                 </p>
-                <a
-                  href="hope.html"
-                  class="btn btn-outline-primary btn-sm"
+                <a href="hope.html" class="btn btn-outline-primary btn-sm"
                   >View Details</a
                 >
               </div>
