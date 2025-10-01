@@ -30,28 +30,24 @@
 // window.addEventListener("load", lazyLoadImages);
 
 function adjustScroll() {
-  let thumb = document.getElementById("scrollthumb");
-  let bar = document.getElementById("scrollbody");
-  const bar_width = Math.max(
-    bar.scrollWidth,
-    bar.offsetWidth,
-    bar.clientWidth,
-    bar.scrollWidth,
-    bar.offsetWidth,
-  );
-  const limit =
-    Math.max(
-      document.body.scrollWidth,
-      document.body.offsetWidth,
-      document.documentElement.clientWidth,
-      document.documentElement.scrollWidth,
-      document.documentElement.offsetWidth,
-    ) - window.innerWidth;
-  thumb.style.transform = `translateX(${
-    bar_width *
-    ((window.scrollX - thumb.getBoundingClientRect().width) /
-      (limit + thumb.getBoundingClientRect().width))
-  }px)`;
+  const scrollbar = document.getElementById("scrollbar");
+  const thumb = document.getElementById("scrollthumb");
+  const scrollEl = document.scrollingElement || document.documentElement;
+
+  // Use fractional pixel sizes to avoid zoom/DPR rounding issues
+  const barWidth = scrollbar.getBoundingClientRect().width;
+  const thumbWidth = thumb.getBoundingClientRect().width;
+
+  const maxScroll = Math.max(0, scrollEl.scrollWidth - scrollEl.clientWidth);
+  const progress = maxScroll > 0 ? scrollEl.scrollLeft / maxScroll : 0;
+
+  const maxThumbX = Math.max(0, barWidth - thumbWidth);
+  const thumbX = Math.min(maxThumbX, Math.max(0, progress * maxThumbX));
+
+  // Position relative to the scrollbar wrapper
+  thumb.style.left = `${thumbX}px`;
 }
 
-window.addEventListener("scroll", adjustScroll);
+window.addEventListener("DOMContentLoaded", adjustScroll);
+window.addEventListener("resize", adjustScroll);
+window.addEventListener("scroll", adjustScroll, { passive: true });

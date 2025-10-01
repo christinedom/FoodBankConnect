@@ -35,9 +35,20 @@ body {
     overflow-y: hidden;
 }
 
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+}
+
 #thumbtext {
     transform: translateY(1.5em);
     opacity: 85%;
+}
+
+#info {
+    text-shadow: 0.1em 0.1em 0.2em black;
 }
 
 #maintable {
@@ -55,23 +66,35 @@ table {
     transform: translateY(-5em);
 }
 
-#scrollbody {
+#scrollbar {
+    position: relative;
     width: 55em;
+    height: 1.5em;
+}
+
+#scrollbody {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
     height: 0.25em;
+    transform: translateY(-50%);
     background-color: rgba(255, 255, 255, 0.5);
     border-radius: 1em;
-    transform: translateY(0.625em);
     box-shadow: 0 0 1em #000000aa;
 }
 
 #scrollthumb {
-    float: left;
-    transform: translateX(-50%);
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
     width: 2.5em;
     height: 1em;
-    background-color: white;
-    border: 2em 2em 2em 2em white;
+    border: none;
     border-radius: 1em;
+    background: white;
+    box-sizing: border-box;
 }
 
 html {
