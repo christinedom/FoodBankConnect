@@ -67,16 +67,13 @@ AI. This led us to the GitLab documentation, which cleared things up.
 # Evidence of Independent Work
 
 ## Paste a before-and-after snippet showing where you changed your own code in response to AI guidance.
-Before:
-
-getIssuesOpened(PROJECT, PER_PAGE, team);
-
-getIssuesClosed(PROJECT, PER_PAGE, team);
-
+Before:   
+getIssuesOpened(PROJECT, PER_PAGE, team);   
+getIssuesClosed(PROJECT, PER_PAGE, team);   
 getCommits(PROJECT, PER_PAGE, team);
 
 
-After:
+After:   
 Promise.all([getIssuesOpened(PROJECT, PER_PAGE, team), 
              getIssuesClosed(PROJECT, PER_PAGE, team), 
              getCommits(PROJECT, PER_PAGE, team)]);
