@@ -12,10 +12,19 @@
             rel="stylesheet"
         />
         <title>Sponsors & Donors - FoodBankConnect</title>
+	<link rel="icon" href="../favicon_bg.svg">
 
         <style>
             .sponsor-img-container {
                 height: 150px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .sponsor-img-container img {
+                max-height: 100%;
+                max-width: 100%;
+                object-fit: contain;
             }
         </style>
 
@@ -28,12 +37,12 @@
 							<img src="${this.getAttribute("sponsor_img")}" alt="${this.getAttribute("sponsor_alt")}">
 						</div>
 						<div class="card-body">
-							<h5 class="card-title">${this.getAttribute("sponsor")}</h5>
+							<h5 class="card-title">${this.getAttribute("name")}</h5>
 							<p class="card-text">
-								Contribution Type: ${this.getAttribute("contr_type")}<br>
-                                Contribution Amount: ${this.getAttribute("contribution_amt")}<br>
+								Contribution: ${this.getAttribute("contribution")}<br>
+								Contribution Amount: ${this.getAttribute("contribution_amt")}<br>
                                 Contribution Unit: ${this.getAttribute("contribution_unit")}<br>
-								Affiliation: ${this.getAttribute("affil")}<br>
+								Affiliation: ${this.getAttribute("affiliation")}<br>
 								Past Involvement: ${this.getAttribute("past_inv")}
 							</p>
 							<a href="${this.getAttribute("sponsor_page")}" class="stretched-link"></a>
@@ -49,7 +58,8 @@
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
             <div class="container">
                 <a class="navbar-brand" href="../index.html">
-                <img id="icon" src="../favicon.svg" alt="My SVG" height="50em" width="50em"> FoodBankConnect</a>                <div class="collapse navbar-collapse">
+                <img id="icon" src="../favicon.svg" alt="My SVG" height="50em" width="50em"> FoodBankConnect</a>
+                <div class="collapse navbar-collapse">
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
                             <a class="nav-link" href="../about.html">About</a>
@@ -90,10 +100,11 @@
                     <sponsor-card
                         sponsor_img="../images/trader-joes.png"
                         sponsor_alt="Trader Joe's Logo"
-                        sponsor="Trader Joe's"
-                        contr_type="Food Sourcing"
-                        contr_amt="5000"
-                        affil="Private Corporation"
+                        name="Trader Joe's"
+                        contribution="Food Sourcing"
+                        contribution_amt="180000"
+                        contribution_unit="Pounds"
+                        affiliation="Private Corporation"
                         past_inv="Hope Food Pantry"
                         sponsor_page="./trader_joes.html"
                     ></sponsor-card>
@@ -104,10 +115,11 @@
                     <sponsor-card
                         sponsor_img="../images/d_lair.png"
                         sponsor_alt="Dragon's Lair Comics and Fantasy Logo"
-                        sponsor="Dragon's Lair Comics and Fantasy"
-                        contr_type="Food/Fund Drive Partners"
-                        contr_amt="2500"
-                        affil="Local Business"
+                        name="Dragon's Lair Comics and Fantasy"
+                        contribution="Food Drive Partners"
+                        contribution_amt="1200"
+                        contribution_unit="Pounds"
+                        affiliation="Local Business"
                         past_inv="Hope Food Pantry"
                         sponsor_page="./dlcf.html"
                     ></sponsor-card>
@@ -118,10 +130,11 @@
                     <sponsor-card
                         sponsor_img="../images/trinity_church.jpeg"
                         sponsor_alt="Trinity Church of Austin Logo"
-                        sponsor="Trinity Church of Austin"
-                        contr_type="Housing Pantry"
-                        contr_amt="0"
-                        affil="Non Profit"
+                        name="Trinity Church of Austin"
+                        contribution="Housing Pantry"
+                        contribution_amt="N/A"
+                        contribution_unit="N/A"
+                        affiliation="Church"
                         past_inv="Hope Food Pantry"
                         sponsor_page="./trinity_church.html"
                     ></sponsor-card>

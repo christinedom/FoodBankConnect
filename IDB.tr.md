@@ -13,11 +13,11 @@ This site helps solve the problem that many low-income and underserved communiti
 
 ## 2. User Stories
 
-- **Story 1:** Waiting on customer group to make posts
-- **Story 2:** Waiting on customer group to make posts
-- **Story 3:** Waiting on customer group to make posts
-- **Story 4:** Waiting on customer group to make posts
-- **Story 5:** Waiting on customer group to make posts
+- **Story 1:** Our customer groups never gave us any user stories
+- **Story 2:** Our customer groups never gave us any user stories
+- **Story 3:** Our customer groups never gave us any user stories
+- **Story 4:** Our customer groups never gave us any user stories
+- **Story 5:** Our customer groups never gave us any user stories
 
 ---
 
@@ -25,6 +25,7 @@ This site helps solve the problem that many low-income and underserved communiti
 
 - **Note:** Not implemented in phase one
 - **URL:** https://www.postman.com/downing-group-7/dafrancc-s-workspace/overview
+- For each model, we have GET API requests for obtaining either a specific instance via its ID, or you can get all instances for that model.
 
 ### GET Examples
 
