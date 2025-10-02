@@ -103,7 +103,7 @@
 | Francisco Vivas   | 11.5            |              |  
 | Christine Dominic | 12.0            |              |  
 | Mahika Dawar      | 12              |              |  
-| Jose Lopez        | 12              |              |  
+| Jose Lopez        | 12              | 14            |  
 
 **Comments:**  
 
