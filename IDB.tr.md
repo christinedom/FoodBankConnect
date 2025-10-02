@@ -25,6 +25,7 @@ This site helps solve the problem that many low-income and underserved communiti
 
 - **Note:** Not implemented in phase one
 - **URL:** https://www.postman.com/downing-group-7/dafrancc-s-workspace/overview
+- For each model, we have GET API requests for obtaining either a specific instance via its ID, or you can get all instances for that model.
 
 ### GET Examples
 
