@@ -99,13 +99,13 @@
 ### Time Tracking
 | Member            | Estimated Hours | Actual Hours |  
 |-------------------|-----------------|--------------|  
-| Odin Limaye       | 11.5            |              |  
+| Odin Limaye       | 11.5            | 16           |  
 | Francisco Vivas   | 11.5            |              |  
 | Christine Dominic | 12.0            |              |  
 | Mahika Dawar      | 12              |              |  
-| Jose Lopez        | 12              | 14            |  
+| Jose Lopez        | 12              | 14           |  
 
-**Comments:**  
+**Comments:** None  
 
 ---  
 
