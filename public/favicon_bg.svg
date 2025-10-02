@@ -57,7 +57,7 @@
        cy="256"
        r="250.50015" /><text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:65px;font-family:'Miltonian Tattoo';-inkscape-font-specification:'Miltonian Tattoo';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#1c1d52;stroke:#000000;stroke-width:0"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:65px;font-family:'Miltonian Tattoo';-inkscape-font-specification:'Miltonian Tattoo';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#1c1d52;stroke:none;stroke-width:0"
        x="124.53743"
        y="429.65686"
        id="text3"><tspan
@@ -65,7 +65,7 @@
          id="tspan3"
          x="124.53743"
          y="429.65686"
-         style="font-size:65px;fill:#24a0e4;fill-opacity:1">Connect</tspan></text><text
+         style="font-size:65px;fill:#24a0e4;fill-opacity:1;stroke:none">Connect</tspan></text><text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:75px;font-family:'Miltonian Tattoo';-inkscape-font-specification:'Miltonian Tattoo';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#090a42;stroke:none;stroke-width:0;fill-opacity:1"
        x="70.712433"
