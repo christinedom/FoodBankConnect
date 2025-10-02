@@ -101,8 +101,8 @@
 |-------------------|-----------------|--------------|  
 | Odin Limaye       | 11.5            | 16           |  
 | Francisco Vivas   | 11.5            | 12           |  
-| Christine Dominic | 12.0            | 12.5 /u/cdominic/cs373-fall-2025-55085_07/README.md        |  
-| Mahika Dawar      | 12              |              |  
+| Christine Dominic | 12.0            | 12.5         |  
+| Mahika Dawar      | 12              | 13           |  
 | Jose Lopez        | 12              | 14           |  
 
 **Comments:** None  
