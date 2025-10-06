@@ -3,9 +3,16 @@ stages:
 
 deploy_website:
   stage: deploy
+
   image: 
     name: amazon/aws-cli
     entrypoint: [""]
+
   script:
     - aws s3 sync public/ s3://$S3_BUCKET --delete
     - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DIST_ID --paths "/*"
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: on_success
+    - when: never
