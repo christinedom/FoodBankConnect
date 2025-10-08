@@ -1,4 +1,4 @@
-# Makefile
+# Makefile for root
 
 # Default commit message
 message ?= "Another commit"
