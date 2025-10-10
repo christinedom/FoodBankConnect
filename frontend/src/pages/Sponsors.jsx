@@ -2,6 +2,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "../styles/Sponsors.css";
+import Navbar from "../components/Navbar";
+import Header from "../components/Header";
+import Footer from "../components/Footer"
 
 const sponsorsList = [
   {
@@ -42,37 +45,8 @@ const sponsorsList = [
 const Sponsors = () => {
   return (
     <div className="sponsors-page">
-      {/* Navbar */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div className="container">
-          <Link className="navbar-brand" to="/">
-            <img src="/favicon.svg" alt="Icon" height="50" width="50" /> FoodBankConnect
-          </Link>
-          <div className="collapse navbar-collapse">
-            <ul className="navbar-nav ms-auto">
-              <li className="nav-item">
-                <Link className="nav-link" to="/about">About</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/foodbanks">Food Banks</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/programs">Programs</Link>
-              </li>
-              <li className="nav-item">
-                <span className="nav-link active">Sponsors</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
-
-      {/* Header */}
-      <header className="py-5 text-center">
-        <div className="container">
-          <h1 className="display-5 fw-bold">Sponsors & Donors</h1>
-        </div>
-      </header>
+      <Navbar/>
+      <Header headerText="Sponsors & Donors"/>
 
       {/* Sponsor Cards */}
       <main className="container my-5">
@@ -107,10 +81,7 @@ const Sponsors = () => {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="text-center py-3 bg-primary text-white mt-5">
-        &copy; 2025 FoodBankConnect
-      </footer>
+      <Footer/>
     </div>
   );
 };

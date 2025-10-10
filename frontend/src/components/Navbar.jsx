@@ -1,4 +1,3 @@
-import fav from "../assets/react.svg";
 import { Link, NavLink } from "react-router-dom";
 
 const Navbar = () => {
@@ -6,7 +5,13 @@ const Navbar = () => {
 		<nav className="navbar navbar-expand-lg navbar-dark bg-primary">
 			<div className="container-fluid">
 				<Link className="navbar-brand" to="/">
-					<img id="icon" src={fav} alt="My SVG" height="50em" width="50em" />{" "}
+					<img
+						src="/favicon.svg"
+						alt="My SVG"
+						height="50"
+						width="50"
+						style={{ marginLeft: "32%", marginRight: "5px" }}
+					/>
 					FoodBankConnect
 				</Link>
 				<div className="collapse navbar-collapse">
