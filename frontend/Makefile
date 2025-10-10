@@ -22,5 +22,10 @@ status:
 	git fetch
 	git status
 
-docker:
+# Run this the very first time you use the Docker
+docker-setup:
 	docker run -it -p 3000:3000 -v ${PWD}:/app -w /app idb-frontend
+
+# Run this for all future uses of the Docker
+docker:
+	docker start -ai 535e07ae1540
