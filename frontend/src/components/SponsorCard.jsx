@@ -10,11 +10,12 @@ const SponsorCard = ({
 	contribution_unit,
 	affiliation,
 	past_inv,
+	sponsor_details
 }) => {
 	const navigate = useNavigate();
 
 	const handleClick = () => {
-		navigate("/sponsor", {
+		navigate(`/sponsors/${name}`, {
 			state: {
 				sponsor_img,
 				sponsor_alt,
@@ -24,13 +25,14 @@ const SponsorCard = ({
 				contribution_unit,
 				affiliation,
 				past_inv,
+				sponsor_details
 			},
 		});
 	};
 
 	return (
 		<div
-			className="card sponsor-card shadow-sm"
+			className="card sponsor-card h-100 shadow-sm"
 			onClick={handleClick}
 			style={{ cursor: "pointer" }}>
 			<div className="sponsor-img-container">
@@ -47,7 +49,7 @@ const SponsorCard = ({
 					<br />
 					<strong>Past Involvement:</strong> {past_inv}
 				</p>
-				<a href="" className="btn btn-primary">
+				<a href={sponsor_details} className="btn btn-primary">
 					View Details
 				</a>
 			</div>

@@ -5,6 +5,7 @@ import "../styles/Sponsors.css";
 import Navbar from "../components/Navbar";
 import Header from "../components/Header";
 import Footer from "../components/Footer"
+import SponsorCard from "../components/SponsorCard";
 
 const sponsorsList = [
   {
@@ -56,7 +57,18 @@ const Sponsors = () => {
         <div className="row g-4">
           {sponsorsList.map((sponsor, idx) => (
             <div key={idx} className="col-md-4">
-              <div className="card h-100 shadow-sm">
+              <SponsorCard
+                sponsor_img={sponsor.image}
+                sponsor_alt={sponsor.alt}
+                name={sponsor.name}
+                contribution={sponsor.contribution}
+                contribution_amt={sponsor.contributionAmt}
+                contribution_unit={sponsor.contributionUnit}
+                affiliation={sponsor.affiliation}
+                past_inv={sponsor.pastInvolvement}
+                sponsor_details={sponsor.detailsPage}
+              />
+              {/* <div className="card h-100 shadow-sm">
                 <div className="sponsor-img-container" style={{ height: "150px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <img
                     src={sponsor.image}
@@ -75,7 +87,7 @@ const Sponsors = () => {
                   </p>
                   <Link to={`/${sponsor.detailsPage}`} className="stretched-link"></Link>
                 </div>
-              </div>
+              </div> */}
             </div>
           ))}
         </div>
