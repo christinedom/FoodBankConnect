@@ -23,7 +23,7 @@ const SponsorInstancePage = () => {
 		<div id="wrapper">
 			<Navbar />
 			<Header headerText={"Sponsors & Donors - " + name} />
-			<Breadcrumb model_page="Sponsors & Donors" current_page={name} />
+			<Breadcrumb model_type="sponsors" current_page={name} />
 
 			{/* <!--Main container--> */}
 			<main className="container my-5">
