@@ -11,7 +11,7 @@ build_react:
     # Install dependencies
     - npm ci
     # Create the production build in /build
-    - npm run build
+    - CI=false npm run build
   artifacts:
     paths:
       # Save build folder for next job
