@@ -3,170 +3,224 @@
 
 /* Reset and base styles */
 * {
-    margin: 0;
-    padding: 0;
-    font-family: "Motiva Sans", "Roboto", sans-serif;
+  margin: 0;
+  padding: 0;
+  font-family: "Motiva Sans", "Roboto", sans-serif;
 }
 
 /* Hide scrollbars */
-*::-webkit-scrollbar { display: none; }
-* { -ms-overflow-style: none; scrollbar-width: none; }
+*::-webkit-scrollbar {
+  display: none;
+}
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
-.wrapper body {
-    background-color: #1a1a1a;
-    color: white;
+.wrapper {
+  background-color: #1a1a1a;
+  color: white;
+  overflow-x: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 /* Overlay */
 .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.25);
-    pointer-events: none; /* clicks pass through */
-    z-index: 5; /* behind buttons */
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  z-index: 5;
 }
 
 /* Header / Icon */
 .icon {
-    position: fixed;
-    width: 25em;
-    height: 25em;
-    margin-top: 1em;
-    left: 0;
-    right: 0;
-    z-index: 10;
+  display: block;
+  margin: 0 auto;
+  width: 10em;
+  height: auto;
+  margin-bottom: 1rem;
+  z-index: 10;
+  position: relative;
 }
 
 /* Main table wrapper */
 .maintable {
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 20; /* ensure buttons are on top */
+  position: relative;
+  margin: 0 auto;
+  z-index: 20;
+  text-align: center;
+  max-width: 900px;
+  padding: 2rem;
+  background: transparent;
 }
 
 /* Scrollbar */
 .scroll-tr {
-    height: 3em;
-    width: 55em;
-    transform: translateY(-5em);
-    z-index: 15;
+  height: 3em;
+  width: 100%;
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  z-index: 15;
 }
 
 .scrollbar {
-    position: relative;
-    width: 55em;
-    height: 1.5em;
+  position: relative;
+  width: 50%;
+  max-width: 600px;
+  height: 1.5em;
 }
 
 .scrollbody {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    height: 0.25em;
-    transform: translateY(-50%);
-    background-color: rgba(255, 255, 255, 0.5);
-    border-radius: 1em;
-    box-shadow: 0 0 1em #000000aa;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 0.25em;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 1em;
+  box-shadow: 0 0 1em #000000aa;
 }
 
 .scrollthumb {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    transform: translateY(-50%);
-    width: 2.5em;
-    height: 1em;
-    border-radius: 1em;
-    background: white;
-    box-sizing: border-box;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 2.5em;
+  height: 1em;
+  border-radius: 1em;
+  background: white;
+  box-sizing: border-box;
 }
 
 /* Background table and images */
 .bgtable {
-    position: absolute;
-    width: 100%;
-    height: 50%;
-    text-align: center;
-    z-index: 1; /* behind overlay and buttons */
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  z-index: 1;
 }
 
 .wrapper td {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
 }
 
 .bg-img {
-    width: auto;
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-    opacity: 0;
-    transition: opacity 2s;
-    pointer-events: none; /* <<< makes clicks pass through images */
+  width: 100%;
+  height: 100vh;
+  object-fit: cover;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 2s;
+  pointer-events: none;
 }
 
 .fade-in {
-    opacity: 1;
-    transition: opacity 2s;
+  opacity: 1;
+  transition: opacity 2s;
 }
 
 /* Text styles */
-.wrapper h1, h2, h3, h4, h5, h6 {
-    font-weight: 800;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-    color: white;
-    text-align: center;
+.wrapper h1,
+.wrapper h2,
+.wrapper h3,
+.wrapper h4,
+.wrapper h5,
+.wrapper h6 {
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: white;
+  text-align: center;
 }
 
 .wrapper p {
-    font-size: 1.2em;
-    line-height: 1.6;
-    color: #cccccc;
-    max-width: 60ch;
-    margin: 1em auto;
-    text-shadow: 0 0 0.5em #00000067;
+  font-size: 1.1em;
+  line-height: 1.6;
+  color: #cccccc;
+  max-width: 60ch;
+  margin: 1em auto;
+  text-shadow: 0 0 0.5em #00000067;
 }
 
 /* Buttons / links */
-button, .button, a.button,
-.about-btn, .sponsors-btn, .programs-btn, .food-banks-btn {
-    background-color: #000;
-    color: #fff;
-    font-size: 1em;
-    font-weight: 500;
-    padding: 0.75em 1.5em;
-    border-radius: 999px;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-    text-decoration: none;
-    display: inline-block;
-    transition: all 0.2s ease-in-out;
-    position: relative;
-    z-index: 25; /* buttons always on top */
+button,
+.button,
+a.button,
+.about-btn,
+.sponsors-btn,
+.programs-btn,
+.food-banks-btn {
+  background-color: #000;
+  color: #fff;
+  font-size: 1em;
+  font-weight: 500;
+  padding: 0.75em 1.5em;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  z-index: 25;
+  margin: 0.5em;
 }
 
-button:hover, .button:hover, a.button:hover,
-.about-btn:hover, .sponsors-btn:hover, .programs-btn:hover, .food-banks-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+button:hover,
+.button:hover,
+a.button:hover,
+.about-btn:hover,
+.sponsors-btn:hover,
+.programs-btn:hover,
+.food-banks-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
 }
 
 /* Specific element adjustments */
 .thumbtext {
-    transform: translateY(1.5em);
-    opacity: 85%;
+  margin-top: 1.25em;
+  opacity: 85%;
 }
 
 .info {
-    text-shadow: 0.1em 0.1em 0.2em black;
+  text-shadow: 0.1em 0.1em 0.2em black;
 }
 
-.food-banks-btn, .sponsors-btn, .programs-btn, .about-btn {
-    margin: 0.5em;
-    border-radius: 0.25em;
-    box-shadow: 0 0 0.5em #00000067;
+.food-banks-btn,
+.sponsors-btn,
+.programs-btn,
+.about-btn {
+  border-radius: 0.25em;
+  box-shadow: 0 0 0.5em #00000067;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .icon {
+    width: 8em;
+  }
+
+  .maintable {
+    padding: 1rem;
+  }
+
+  .scrollbar {
+    width: 80%;
+  }
+
+  .wrapper p {
+    font-size: 1em;
+  }
 }
