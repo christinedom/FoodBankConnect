@@ -176,11 +176,11 @@ button:hover, .button:hover, a.button:hover,
 
 .thumbtext {
     position: fixed;
-    bottom: 4.5em;              /* balanced between the scroll bar and buttons */
+    bottom: 7.5em;               
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
-    font-size: 0.7em !important; /* readable but not intrusive */
+    font-size: 0.7em !important;
     color: #ffffff;
     opacity: 0.9;
     z-index: 99999 !important;
