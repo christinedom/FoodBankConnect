@@ -176,14 +176,14 @@ button:hover, .button:hover, a.button:hover,
 
 .thumbtext {
     position: fixed;
-    bottom: 2em;               /* floats near bottom of the viewport */
+    bottom: 1em;               /* moved lower so it doesn’t overlap buttons */
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
-    font-size: 0.95em;
-    color: #ffffff;            /* make sure it’s bright white for readability */
-    opacity: 1;                /* fully visible */
-    z-index: 9999 !important;  /* ensure it’s above everything */
-    text-shadow: 0 0 0.75em #000; /* soft glow for readability */
-    pointer-events: none;      /* don’t block clicks on anything behind it */
+    font-size: 0.8em;          /* slightly smaller text */
+    color: #ffffff;
+    opacity: 0.95;
+    z-index: 9999 !important;  /* ensure it stays above all elements */
+    text-shadow: 0 0 0.75em #000; /* glow for visibility */
+    pointer-events: none;      /* allow clicking elements behind it */
 }
