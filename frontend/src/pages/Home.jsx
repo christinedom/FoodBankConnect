@@ -1,37 +1,47 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-import styles from "../styles/Home.module.css"
+import styles from "../styles/Home.module.css";
 
 const Home = () => {
   useEffect(() => {
     function adjustScroll() {
-      
-      const scrollbar = document.getElementsByClassName(styles.scrollbar);
-      const thumb = document.getElementsByClassName(styles.scrollthumb);
+      const scrollbar = document.querySelector(`.${styles.scrollbar}`);
+      const thumb = document.querySelector(`.${styles.scrollthumb}`);
       const scrollEl = document.scrollingElement || document.documentElement;
 
       if (!scrollbar || !thumb) return;
 
       const barWidth = scrollbar.getBoundingClientRect().width;
       const thumbWidth = thumb.getBoundingClientRect().width;
-
       const maxScroll = Math.max(0, scrollEl.scrollWidth - scrollEl.clientWidth);
       const progress = maxScroll > 0 ? scrollEl.scrollLeft / maxScroll : 0;
-
       const maxThumbX = Math.max(0, barWidth - thumbWidth);
       const thumbX = Math.min(maxThumbX, Math.max(0, progress * maxThumbX));
-
       thumb.style.left = `${thumbX}px`;
     }
 
+    // Update thumb on scroll and resize
     window.addEventListener("DOMContentLoaded", adjustScroll);
     window.addEventListener("resize", adjustScroll);
     window.addEventListener("scroll", adjustScroll, { passive: true });
+
+    // Restore Shift + Scroll horizontal movement
+    const shiftScroll = (e) => {
+      if (e.shiftKey) {
+        e.preventDefault();
+        window.scrollBy({
+          left: e.deltaY < 0 ? -100 : 100,
+          behavior: "smooth",
+        });
+      }
+    };
+    window.addEventListener("wheel", shiftScroll, { passive: false });
 
     return () => {
       window.removeEventListener("DOMContentLoaded", adjustScroll);
       window.removeEventListener("resize", adjustScroll);
       window.removeEventListener("scroll", adjustScroll);
+      window.removeEventListener("wheel", shiftScroll);
     };
   }, []);
 
@@ -76,7 +86,11 @@ const Home = () => {
           <tbody>
             <tr>
               <td>
-                <img className={styles.icon} src="favicon.svg" alt="Food Bank Icon" />
+                <img
+                  className={styles.icon}
+                  src="favicon.svg"
+                  alt="Food Bank Icon"
+                />
               </td>
             </tr>
             <tr>
