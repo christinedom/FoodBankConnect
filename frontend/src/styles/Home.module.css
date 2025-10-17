@@ -181,9 +181,9 @@ button:hover, .button:hover, a.button:hover,
     transform: translateX(-50%);
     text-align: center;
     font-size: 0.95em;
-    color: #cccccc;
-    opacity: 0.9;
-    z-index: 100;              /* ensure it’s above everything */
-    text-shadow: 0 0 0.5em #000; /* soft shadow for readability */
+    color: #ffffff;            /* make sure it’s bright white for readability */
+    opacity: 1;                /* fully visible */
+    z-index: 9999 !important;  /* ensure it’s above everything */
+    text-shadow: 0 0 0.75em #000; /* soft glow for readability */
+    pointer-events: none;      /* don’t block clicks on anything behind it */
 }
-
