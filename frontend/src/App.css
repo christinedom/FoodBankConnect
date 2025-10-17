@@ -1,6 +1,14 @@
+/* app.css - cleaned up for responsiveness */
+
+/* Make app assets responsive and match base font sizing */
 .App {
   text-align: center;
+  font-family: "Motiva Sans","Roboto",sans-serif;
+  font-size: 16px;
 }
+
+/* Make images scale nicely */
+img { max-width: 100%; height: auto; display: block; }
 
 .App-logo {
   height: 40vmin;
@@ -29,10 +37,6 @@
 }
 
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }

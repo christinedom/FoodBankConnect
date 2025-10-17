@@ -1,172 +1,238 @@
 /* Import Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400&family=Motiva+Sans:wght@800&display=swap');
 
-/* Reset and base styles */
-* {
-    margin: 0;
-    padding: 0;
-    font-family: "Motiva Sans", "Roboto", sans-serif;
+/* Reset and base styles - mobile first */
+:root{
+  --bg: #1a1a1a;
+  --muted: #cccccc;
+  --btn-radius: 999px;
+  --btn-padding: 0.75rem 1.25rem;
+  --z-buttons: 25;
 }
 
-/* Hide scrollbars */
+/* Global reset */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html,body,#root { height: 100%; }
+body {
+  background-color: var(--bg);
+  color: white;
+  font-family: "Motiva Sans","Roboto",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  line-height: 1.35;
+}
+
+/* Hide scrollbars visually but keep scrolling available */
 *::-webkit-scrollbar { display: none; }
 * { -ms-overflow-style: none; scrollbar-width: none; }
 
-body {
-    background-color: #1a1a1a;
-    color: white;
-}
-
 /* Overlay */
 .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.25);
-    pointer-events: none; /* clicks pass through */
-    z-index: 5; /* behind buttons */
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  pointer-events: none;
+  z-index: 5;
 }
 
-/* Header / Icon */
+/* Icon/header - scale with viewport on small screens */
 #icon {
-    position: fixed;
-    width: 25em;
-    height: 25em;
-    margin-top: 1em;
-    left: 0;
-    right: 0;
-    z-index: 10;
+  position: relative;
+  width: min(48vw, 220px);
+  height: auto;
+  margin: 1rem auto;
+  display: block;
+  z-index: 10;
 }
 
-/* Main table wrapper */
+/* Main wrapper - center horizontally and vertically with safer sizing */
 #maintable {
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 20; /* ensure buttons are on top */
+  position: fixed;          /* keeps the hero centered on top of bg */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 92vw;
+  max-width: 880px;
+  padding: 1rem;
+  text-align: center;
+  z-index: 20;
 }
 
-/* Scrollbar */
+/* Scrollbar area - responsive width */
 #scroll-tr {
-    height: 3em;
-    width: 55em;
-    transform: translateY(-5em);
-    z-index: 15;
+  height: 3em;
+  width: 90%;
+  max-width: 880px;
+  margin: 1rem auto 0;
+  z-index: 15;
+  transform: none; /* keep consistent spacing on small screens */
 }
 
 #scrollbar {
-    position: relative;
-    width: 55em;
-    height: 1.5em;
+  position: relative;
+  width: 100%;
+  height: 1.5em;
+  margin: 0 auto;
 }
 
 #scrollbody {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    height: 0.25em;
-    transform: translateY(-50%);
-    background-color: rgba(255, 255, 255, 0.5);
-    border-radius: 1em;
-    box-shadow: 0 0 1em #000000aa;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 0.25em;
+  transform: translateY(-50%);
+  background-color: rgba(255,255,255,0.5);
+  border-radius: 1em;
+  box-shadow: 0 0 1em #000000aa;
 }
 
 #scrollthumb {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    transform: translateY(-50%);
-    width: 2.5em;
-    height: 1em;
-    border-radius: 1em;
-    background: white;
-    box-sizing: border-box;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 2.5em;
+  height: 1em;
+  border-radius: 1em;
+  background: white;
+  box-sizing: border-box;
 }
 
-/* Background table and images */
+/* Background images - scale and stay behind content */
 #bgtable {
-    position: absolute;
-    width: 100%;
-    height: 50%;
-    text-align: center;
-    z-index: 1; /* behind overlay and buttons */
-}
-
-td {
-    margin: 0;
-    padding: 0;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  text-align: center;
+  z-index: 1;
+  pointer-events: none; /* images don't block clicks */
 }
 
 .bg-img {
-    width: auto;
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-    opacity: 0;
-    transition: opacity 2s;
-    pointer-events: none; /* <<< makes clicks pass through images */
+  width: 100%;
+  height: 100vh;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 2s;
+  pointer-events: none;
 }
 
-.fade-in {
-    opacity: 1;
-    transition: opacity 2s;
-}
+.fade-in { opacity: 1; }
 
-/* Text styles */
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 800;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-    color: white;
-    text-align: center;
+/* Typography */
+h1,h2,h3,h4,h5,h6 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: white;
+  text-align: center;
+  margin: 0.5rem 0;
 }
 
 p {
-    font-size: 1.2em;
-    line-height: 1.6;
-    color: #cccccc;
-    max-width: 60ch;
-    margin: 1em auto;
-    text-shadow: 0 0 0.5em #00000067;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 60ch;
+  margin: 0.9rem auto;
+  text-shadow: 0 0 0.5em #00000067;
+  padding: 0 0.5rem;
 }
 
-/* Buttons / links */
+/* Buttons - stacked full-width on small screens for easy tapping */
 button, .button, a.button,
 #about-btn, #sponsors-btn, #programs-btn, #food-banks-btn {
-    background-color: #000;
-    color: #fff;
-    font-size: 1em;
-    font-weight: 500;
-    padding: 0.75em 1.5em;
-    border-radius: 999px;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-    text-decoration: none;
-    display: inline-block;
-    transition: all 0.2s ease-in-out;
-    position: relative;
-    z-index: 25; /* buttons always on top */
+  background-color: #000;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: var(--btn-padding);
+  border-radius: var(--btn-radius);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  text-decoration: none;
+  display: block;
+  width: calc(100% - 2rem);
+  margin: 0.5rem auto;
+  transition: transform .18s ease, box-shadow .18s ease;
+  position: relative;
+  z-index: var(--z-buttons);
 }
 
 button:hover, .button:hover, a.button:hover,
 #about-btn:hover, #sponsors-btn:hover, #programs-btn:hover, #food-banks-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.25);
 }
 
-/* Specific element adjustments */
+/* thumb text - positioned between scroll bar and buttons; pointer-events none */
 #thumbtext {
-    transform: translateY(1.5em);
-    opacity: 85%;
+  position: fixed;
+  bottom: 5.5rem;               /* mobile default: sits above the buttons */
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 0.78rem;
+  color: #ffffff;
+  opacity: 0.95;
+  z-index: 9999;
+  text-shadow: 0 0 0.75em #000;
+  pointer-events: none;
 }
 
-#info {
-    text-shadow: 0.1em 0.1em 0.2em black;
+/* Other small helpers */
+#info { text-shadow: 0.1em 0.1em 0.2em black; }
+#food-banks-btn, #sponsors-btn, #programs-btn, #about-btn { border-radius: 0.25em; }
+
+/* ========================
+   Larger screens / tablet
+   ======================== */
+@media (min-width: 640px) {
+  #icon { width: min(36vw, 260px); margin-top: 0.5rem; }
+
+  #maintable {
+    width: 80vw;
+    max-width: 980px;
+    padding: 1.25rem;
+  }
+
+  #scroll-tr { width: 55em; margin-top: 1.5rem; transform: translateY(-1rem); }
+  #scrollbar { width: 55em; }
+
+  /* Buttons inline on wider viewports */
+  button, .button, a.button,
+  #about-btn, #sponsors-btn, #programs-btn, #food-banks-btn {
+    display: inline-block;
+    width: auto;
+    margin: 0.5rem;
+  }
+
+  #thumbtext { bottom: 7.5rem; font-size: 0.85rem; }
 }
 
-#food-banks-btn, #sponsors-btn, #programs-btn, #about-btn {
-    margin: 0.5em;
-    border-radius: 0.25em;
-    box-shadow: 0 0 0.5em #00000067;
+/* ========================
+   Desktop / large screens
+   ======================== */
+@media (min-width: 1024px) {
+  #icon { width: min(28vw, 320px); }
+
+  #maintable {
+    width: 60vw;
+    max-width: 1200px;
+    padding: 1.5rem;
+  }
+
+  #scroll-tr { width: 55em; transform: translateY(-2.5rem); }
+  #scrollbar { width: 55em; }
+
+  #thumbtext { bottom: 9.25rem; font-size: 0.9rem; }
+
+  .bg-img { height: 100vh; }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
 }
