@@ -36,7 +36,7 @@ const Home = () => {
   }, []);
 
   return (
-    <div id="wrapper">
+    <div className={styles.wrapper}>
       <div id="pictures">
         <table className={styles.bgtable}>
           <tbody>

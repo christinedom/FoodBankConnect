@@ -12,7 +12,7 @@
 *::-webkit-scrollbar { display: none; }
 * { -ms-overflow-style: none; scrollbar-width: none; }
 
-body {
+.wrapper body {
     background-color: #1a1a1a;
     color: white;
 }
@@ -92,7 +92,7 @@ body {
     z-index: 1; /* behind overlay and buttons */
 }
 
-td {
+.wrapper td {
     margin: 0;
     padding: 0;
 }
@@ -113,7 +113,7 @@ td {
 }
 
 /* Text styles */
-h1, h2, h3, h4, h5, h6 {
+.wrapper h1, h2, h3, h4, h5, h6 {
     font-weight: 800;
     line-height: 1.2;
     letter-spacing: -0.02em;
@@ -121,7 +121,7 @@ h1, h2, h3, h4, h5, h6 {
     text-align: center;
 }
 
-p {
+.wrapper p {
     font-size: 1.2em;
     line-height: 1.6;
     color: #cccccc;

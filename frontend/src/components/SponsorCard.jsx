@@ -1,16 +1,18 @@
 import { useNavigate } from "react-router-dom";
-import styles from "./SponsorCard.module.css"
+import styles from "./SponsorCard.module.css";
 
 const SponsorCard = ({
 	sponsor_img,
 	sponsor_alt,
 	name,
+	about,
 	contribution,
 	contribution_amt,
 	contribution_unit,
 	affiliation,
+	sponsor_link,
 	past_inv,
-	sponsor_details
+	map_link,
 }) => {
 	const navigate = useNavigate();
 
@@ -20,12 +22,14 @@ const SponsorCard = ({
 				sponsor_img,
 				sponsor_alt,
 				name,
+				about,
 				contribution,
 				contribution_amt,
 				contribution_unit,
 				affiliation,
+				sponsor_link,
 				past_inv,
-				sponsor_details
+				map_link: encodeURIComponent(map_link)
 			},
 		});
 	};
@@ -49,9 +53,6 @@ const SponsorCard = ({
 					<br />
 					<strong>Past Involvement:</strong> {past_inv}
 				</p>
-				<a href={sponsor_details} className="btn btn-primary">
-					View Details
-				</a>
 			</div>
 		</div>
 	);

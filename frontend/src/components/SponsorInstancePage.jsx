@@ -3,8 +3,7 @@ import Navbar from "./Navbar";
 import Header from "./Header";
 import Footer from "./Footer";
 import Breadcrumb from "./Breadcrumb";
-
-import "../styles/Sponsors.css";
+import styles from "../styles/Sponsors.module.css";
 
 const SponsorInstancePage = () => {
 	const location = useLocation();
@@ -12,13 +11,16 @@ const SponsorInstancePage = () => {
 		sponsor_img,
 		sponsor_alt,
 		name,
+		about,
 		contribution,
 		contribution_amt,
 		contribution_unit,
 		affiliation,
+		sponsor_link,
 		past_inv,
+		map_link,
 	} = location.state || {};
-
+	const decoded_link = decodeURIComponent(map_link)
 	return (
 		<div id="wrapper">
 			<Navbar />
@@ -27,17 +29,12 @@ const SponsorInstancePage = () => {
 
 			{/* <!--Main container--> */}
 			<main className="container my-5">
-				<div className="sponsor-img-container text-center mb-4">
+				<div className={`${styles["sponsor-img-container"]} text-center mb-4`}>
 					<img src={sponsor_img} alt={sponsor_alt} />
 				</div>
-				<section className="mb-4">
+				<section className={`mb-4 ${styles.about}`}>
 					<h2>About</h2>
-					<p>
-						Lorem ipsum, dolor sit amet consectetur adipisicing elit. Temporibus
-						impedit veritatis odio, quae eligendi dignissimos quibusdam quo
-						natus dolores nihil nostrum vitae nulla at sapiente sequi molestias
-						corporis sit exercitationem.
-					</p>
+					<p>{about}</p>
 				</section>
 				<section className="mb-4">
 					<h2>Details</h2>
@@ -73,6 +70,7 @@ const SponsorInstancePage = () => {
 							<p>
 								<strong>Past Involvement: </strong>
 								{
+									past_inv
 									// past_inv.map((inv) =>(
 									// 	<Link>{inv}</Link>
 									// ))
@@ -80,24 +78,20 @@ const SponsorInstancePage = () => {
 							</p>
 						</li>
 						<li style={{ marginTop: "25px" }}>
-							<a
-								href=""
-								// {website_url}
-								target="_blank">
-								<strong>Website: </strong>
-								{/* {website_url} */}
+							<strong>Website: </strong>
+							<a href={sponsor_link} target="_blank" rel="noreferrer">
+								{sponsor_link}
 							</a>
 						</li>
 					</ul>
 				</section>
-				<section className="map-container mt-4 text-center">
-						<iframe
-							style={{width: "80%", height: "450px"}}
-							src=""
-							// {map_link}
-							allowFullScreen=""
-							loading="lazy"
-							referrerPolicy="no-referrer-when-downgrade"></iframe>
+				<section className={`${styles["map-container"]} mt-3`}>
+					<iframe
+						style={{ width: "80%", height: "450px" }}
+						src={decoded_link}
+						allowFullScreen=""
+						loading="lazy"
+						referrerPolicy="no-referrer-when-downgrade"></iframe>
 				</section>
 			</main>
 
