@@ -128,7 +128,7 @@ https://foodbankconnect.me
 | Francisco Vivas   |                 |              |  
 | Christine Dominic | 16              |              |  
 | Mahika Dawar      |                 |              |  
-| Jose Lopez        |                 |              |  
+| Jose Lopez        | 20              |              |  
 
 **Comments:**
 
