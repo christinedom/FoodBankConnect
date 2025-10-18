@@ -20,7 +20,6 @@ const SponsorInstancePage = () => {
 		past_inv,
 		map_link,
 	} = location.state || {};
-	const decoded_link = decodeURIComponent(map_link)
 	return (
 		<div id="wrapper">
 			<Navbar />
@@ -88,7 +87,7 @@ const SponsorInstancePage = () => {
 				<section className={`${styles["map-container"]} mt-3`}>
 					<iframe
 						style={{ width: "80%", height: "450px" }}
-						src={decoded_link}
+						src={map_link}
 						allowFullScreen=""
 						loading="lazy"
 						referrerPolicy="no-referrer-when-downgrade"></iframe>

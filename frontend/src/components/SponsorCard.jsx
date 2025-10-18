@@ -29,7 +29,7 @@ const SponsorCard = ({
 				affiliation,
 				sponsor_link,
 				past_inv,
-				map_link: encodeURIComponent(map_link)
+				map_link
 			},
 		});
 	};
