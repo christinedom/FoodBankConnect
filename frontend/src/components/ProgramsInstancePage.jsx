@@ -54,7 +54,7 @@ const ProgramsInstancePage = () => {
 							href={sign_up_link}
 							target="_blank"
 							className="btn btn-primary">
-							View Class Schedule
+							Learn More
 						</a>
 					</div>
 				</div>

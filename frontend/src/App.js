@@ -7,6 +7,7 @@ import Programs from "./pages/Programs";
 import Sponsors from "./pages/Sponsors";
 import SponsorInstancePage from "./components/SponsorInstancePage";
 import ProgramsInstancePage from "./components/ProgramsInstancePage";
+import FoodbankInstancePage from "./components/FoodbankInstancePage";
 
 function App() {
 	return (
@@ -15,7 +16,7 @@ function App() {
 				<Route path="/" element={<Home />} />
 				<Route path="/about" element={<About />} />
 				<Route path="/foodbanks" element={<Foodbanks />} />
-				<Route path="/foodbanks/:name" element="" />
+				<Route path="/foodbanks/:name" element={<FoodbankInstancePage />} />
 				<Route path="/programs" element={<Programs />} />
 				<Route path="/programs/:name" element={<ProgramsInstancePage />} />
 				<Route path="/sponsors" element={<Sponsors />} />
