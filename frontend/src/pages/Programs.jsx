@@ -8,7 +8,7 @@ import ProgramCard from "../components/ProgramsCard";
 const programsListStatic = [
   {
     name: "Drive-Thru Food Pantry",
-    type: "Distribution",
+    type: "distribution",
     eligibility: "Open",
     frequency: "Weekly",
     cost: "Free",
@@ -21,7 +21,7 @@ const programsListStatic = [
   },
   {
     name: "Culinary Training Program",
-    type: "Class",
+    type: "class",
     eligibility: "High School GED",
     frequency: "Yearly",
     cost: "Free",
@@ -34,7 +34,7 @@ const programsListStatic = [
   },
   {
     name: "Nutrition Education Program",
-    type: "Service",
+    type: "service",
     eligibility: "Referral-based",
     frequency: "Ongoing Sessions",
     cost: "Free",
@@ -59,7 +59,12 @@ const Programs = () => {
         const res = await fetch("https://foodbankconnect.me/API/programs"); // replace with your real endpoint
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-        setPrograms(data); // assuming API returns array of program objects
+        const normalized = data.map((p) => ({
+          ...p,
+          type: p.type?.toLowerCase(), // normalize type to lowercase
+        }));
+        // assuming API returns array of program objects
+        setPrograms(normalized); 
       } catch (err) {
         console.error("Failed to fetch programs, using static list as fallback:", err);
         setPrograms(programsListStatic); // fallback to static list
