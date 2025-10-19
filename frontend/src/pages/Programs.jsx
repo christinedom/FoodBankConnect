@@ -122,9 +122,9 @@ const Programs = () => {
         <div className="mb-4 text-muted">
           Showing {filteredPrograms.length} Programs in Total
         </div>
-        <div className="row g-4">
+        <div className="row g-4 justify-content-center">
           {filteredPrograms.map((program, idx) => (
-            <div key={idx} className="col-md-6 col-lg-3">
+            <div key={idx} className="col-md-6 col-lg-4">
               <ProgramCard
                 name={program.name}
                 type={program.type}
