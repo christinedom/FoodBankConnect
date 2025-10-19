@@ -1,3 +1,4 @@
+import "../styles/Programs.css";
 import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Header from "../components/Header";
@@ -77,12 +78,9 @@ const Programs = () => {
     fetchPrograms();
   }, []);
 
-  const filteredPrograms =
-  filter === "all"
-    ? programs
-    : programs.filter(
-        (p) => p.type && p.type.toLowerCase() === filter.toLowerCase()
-      );
+  const filteredPrograms = filter === "all"
+  ? programs
+  : programs.filter(p => p.type.toLowerCase() === filter.toLowerCase());
 
 
   const handleFilterClick = (type) => {
@@ -123,9 +121,9 @@ const Programs = () => {
 
       {/* Program Cards */}
       <main className="container">
-        <div className="mb-4 text-muted">
-          Showing {filteredPrograms.length} Programs in Total
-        </div>
+        <p className="text-muted ms-2">
+          Showing {filteredPrograms.length} Program{filteredPrograms.length !== 1 && 's'} in Total
+        </p>
         <div className="row g-4 justify-content-center">
           {filteredPrograms.map((program, idx) => (
             <div key={idx} className="col-md-6 col-lg-4">
