@@ -9,7 +9,7 @@ import ProgramCard from "../components/ProgramsCard";
 const programsListStatic = [
   {
     name: "Drive-Thru Food Pantry",
-    type: "distribution",
+    program_type: "distribution",
     eligibility: "Open",
     frequency: "Weekly",
     cost: "Free",
@@ -22,7 +22,7 @@ const programsListStatic = [
   },
   {
     name: "Culinary Training Program",
-    type: "class",
+    program_type: "class",
     eligibility: "High School GED",
     frequency: "Yearly",
     cost: "Free",
@@ -35,7 +35,7 @@ const programsListStatic = [
   },
   {
     name: "Nutrition Education Program",
-    type: "service",
+    program_type: "service",
     eligibility: "Referral-based",
     frequency: "Ongoing Sessions",
     cost: "Free",
@@ -62,7 +62,7 @@ const Programs = () => {
         const data = await res.json();
         const normalized = data.map((p) => ({
           ...p,
-          type: p.type?.toLowerCase(), // normalize type to lowercase
+          program_type: p.program_type?.toLowerCase(), // normalize type to lowercase
         }));
         // assuming API returns array of program objects
         setPrograms(normalized); 
@@ -80,11 +80,11 @@ const Programs = () => {
 
   const filteredPrograms = filter === "all"
   ? programs
-  : programs.filter(p => p.type.toLowerCase() === filter.toLowerCase());
+  : programs.filter(p => p.program_type.toLowerCase() === filter.toLowerCase());
 
 
-  const handleFilterClick = (type) => {
-    setFilter(type);
+  const handleFilterClick = (program_type) => {
+    setFilter(program_type);
   };
 
   if (loading) return <div className="container my-5">Loading programs...</div>;
@@ -106,15 +106,15 @@ const Programs = () => {
 
       {/* Filter Buttons */}
       <div className="btn-group">
-        {["all", "distribution", "volunteer", "class", "service"].map((type) => (
+        {["all", "distribution", "volunteer", "class", "service"].map((program_type) => (
           <button
-            key={type}
+            key={program_type}
             className={`btn btn-outline-primary ${
-              filter.toLowerCase() === type ? "active" : ""
+              filter.toLowerCase() === program_type ? "active" : ""
             }`}
-            onClick={() => handleFilterClick(type)}
+            onClick={() => handleFilterClick(program_type)}
           >
-            {type.charAt(0).toUpperCase() + type.slice(1)}
+            {program_type.charAt(0).toUpperCase() + program_type.slice(1)}
           </button>
         ))}
       </div>
@@ -129,7 +129,7 @@ const Programs = () => {
             <div key={idx} className="col-md-6 col-lg-4">
               <ProgramCard
                 name={program.name}
-                type={program.type}
+                program_type={program.program_type}
                 elig={program.eligibility}
                 freq={program.frequency}
                 cost={program.cost}
