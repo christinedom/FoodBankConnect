@@ -1,3 +1,4 @@
+import "../styles/Programs.css";
 import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Header from "../components/Header";
@@ -8,7 +9,7 @@ import ProgramCard from "../components/ProgramsCard";
 const programsListStatic = [
   {
     name: "Drive-Thru Food Pantry",
-    type: "Distribution",
+    program_type: "distribution",
     eligibility: "Open",
     frequency: "Weekly",
     cost: "Free",
@@ -21,7 +22,7 @@ const programsListStatic = [
   },
   {
     name: "Culinary Training Program",
-    type: "Class",
+    program_type: "class",
     eligibility: "High School GED",
     frequency: "Yearly",
     cost: "Free",
@@ -34,7 +35,7 @@ const programsListStatic = [
   },
   {
     name: "Nutrition Education Program",
-    type: "Service",
+    program_type: "service",
     eligibility: "Referral-based",
     frequency: "Ongoing Sessions",
     cost: "Free",
@@ -59,7 +60,12 @@ const Programs = () => {
         const res = await fetch("https://foodbankconnect.me/API/programs"); // replace with your real endpoint
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-        setPrograms(data); // assuming API returns array of program objects
+        const normalized = data.map((p) => ({
+          ...p,
+          program_type: p.program_type?.toLowerCase(), // normalize type to lowercase
+        }));
+        // assuming API returns array of program objects
+        setPrograms(normalized); 
       } catch (err) {
         console.error("Failed to fetch programs, using static list as fallback:", err);
         setPrograms(programsListStatic); // fallback to static list
@@ -72,13 +78,13 @@ const Programs = () => {
     fetchPrograms();
   }, []);
 
-  const filteredPrograms =
-    filter === "all"
-      ? programs
-      : programs.filter((p) => p.type === filter);
+  const filteredPrograms = filter === "all"
+  ? programs
+  : programs.filter(p => p.program_type.toLowerCase() === filter.toLowerCase());
 
-  const handleFilterClick = (type) => {
-    setFilter(type);
+
+  const handleFilterClick = (program_type) => {
+    setFilter(program_type);
   };
 
   if (loading) return <div className="container my-5">Loading programs...</div>;
@@ -99,35 +105,31 @@ const Programs = () => {
       )}
 
       {/* Filter Buttons */}
-      <div className="container text-center mb-4">
-        <div className="btn-group">
-          {["all", "Distribution", "Volunteer", "Class", "Service"].map(
-            (type) => (
-              <button
-                key={type}
-                className={`btn btn-outline-primary ${
-                  filter === type ? "active" : ""
-                }`}
-                onClick={() => handleFilterClick(type)}
-              >
-                {type === "all" ? "All" : type}
-              </button>
-            )
-          )}
-        </div>
+      <div className="btn-group">
+        {["all", "distribution", "volunteer", "class", "service"].map((program_type) => (
+          <button
+            key={program_type}
+            className={`btn btn-outline-primary ${
+              filter.toLowerCase() === program_type ? "active" : ""
+            }`}
+            onClick={() => handleFilterClick(program_type)}
+          >
+            {program_type.charAt(0).toUpperCase() + program_type.slice(1)}
+          </button>
+        ))}
       </div>
 
       {/* Program Cards */}
       <main className="container">
-        <div className="mb-4 text-muted">
-          Showing {filteredPrograms.length} Programs in Total
-        </div>
-        <div className="row g-4">
+        <p className="text-muted ms-2">
+          Showing {filteredPrograms.length} Program{filteredPrograms.length !== 1 && 's'} in Total
+        </p>
+        <div className="row g-4 justify-content-center">
           {filteredPrograms.map((program, idx) => (
-            <div key={idx} className="col-md-6 col-lg-3">
+            <div key={idx} className="col-md-6 col-lg-4">
               <ProgramCard
                 name={program.name}
-                type={program.type}
+                program_type={program.program_type}
                 elig={program.eligibility}
                 freq={program.frequency}
                 cost={program.cost}

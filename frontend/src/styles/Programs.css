@@ -1,0 +1,65 @@
+/* Programs.css */
+
+/* Ensure each card stretches fully */
+.program-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s ease-in-out;
+  background: #fff;
+}
+
+.program-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Inner content layout */
+.program-card-body {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  padding: 16px;
+}
+
+.program-card h5 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.program-card p {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+/* Align See Details button to bottom */
+.program-card-body .btn {
+  margin-top: auto;
+  width: 100%;
+}
+
+/* Button active state */
+.btn-outline-primary.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/* Filter bar spacing */
+.program-filter-bar {
+  margin-bottom: 2rem;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .program-card h5 {
+    font-size: 1rem;
+  }
+
+  .program-card p {
+    font-size: 0.9rem;
+  }
+}
