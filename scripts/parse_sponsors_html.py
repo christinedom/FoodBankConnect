@@ -1,10 +1,24 @@
 # scripts/parse_sponsors_html.py
 """
-Parse public/sponsors/sponsors.html (local file), extract <sponsor-card> custom elements,
-follow local sponsor detail pages if present, and write normalized JSON files to
-data/normalized/.
+Parse public/sponsors/sponsors.html, extract <sponsor-card> elements,
+follow local sponsor detail pages if present, and write normalized JSON files
+to data/normalized/.
 
-Run from repo root:
+Output format (per file): a JSON list (array) containing a single object with keys:
+{
+  "name": "...",
+  "image": "...",
+  "alt": "...",
+  "contribution": "...",
+  "contributionAmt": "...",   # combined amount + unit or null
+  "affiliation": "...",
+  "pastInvolvement": "...",
+  "about": "...",
+  "sponsor_link": "...",
+  "type": "sponsor"
+}
+
+Run:
     python3 scripts/parse_sponsors_html.py
 """
 import re
@@ -24,15 +38,10 @@ EMAIL_RE = re.compile(r"[\w\.-]+@[\w\.-]+\.\w+")
 PHONE_RE = re.compile(r"(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}")
 
 def slugify(text: str) -> str:
-    s = text.lower().strip()
+    s = (text or "").lower().strip()
     s = re.sub(r"[^a-z0-9]+", "-", s)
     s = re.sub(r"-+", "-", s).strip("-")
     return s or "sponsor"
-
-def stable_id(name: str) -> str:
-    s = slugify(name)
-    h = hashlib.md5(name.encode("utf-8")).hexdigest()[:8]
-    return f"sponsor:{s}-{h}"
 
 def read_detail_page(relative_href):
     """Return (html, Path) or (None, None) if not found."""
@@ -51,82 +60,67 @@ def read_detail_page(relative_href):
     return None, None
 
 def parse_detail_fields(html):
-    """Extract phone, email, images, description, website from a sponsor detail page."""
-    out = {"phone": None, "email": None, "images": [], "description": None, "website": None}
+    """Extract images, description, website from a sponsor detail page."""
+    out = {"images": [], "description": None, "website": None}
     if not html:
         return out
     soup = BeautifulSoup(html, "lxml")
-    # phone
-    tel = soup.find("a", href=lambda x: x and x.startswith("tel:"))
-    if tel:
-        out["phone"] = tel.get_text(strip=True)
-    else:
-        m = PHONE_RE.search(soup.get_text(" ", strip=True))
-        if m:
-            out["phone"] = m.group(0)
-    # email
-    mail = soup.find("a", href=lambda x: x and x.startswith("mailto:"))
-    if mail:
-        out["email"] = mail.get("href").split(":",1)[1].split("?")[0]
-    else:
-        m2 = EMAIL_RE.search(soup.get_text(" ", strip=True))
-        if m2:
-            out["email"] = m2.group(0)
     # images
     for img in soup.select("img"):
         src = img.get("src")
         if src:
             out["images"].append(src)
     # website (first http(s) absolute link)
-    site = soup.find("a", href=lambda x: x and x.startswith("http"))
+    site = soup.find("a", href=lambda x: x and isinstance(x, str) and x.startswith("http"))
     if site:
         out["website"] = site.get("href")
     # description: take first meaningful paragraph
     p = soup.find("p")
     if p:
-        out["description"] = p.get_text(" ", strip=True)
+        # collapse whitespace
+        desc = re.sub(r"\s+", " ", p.get_text(" ", strip=True)).strip()
+        out["description"] = desc
     return out
 
-def normalize_sponsor(raw_attrs: dict, detail_meta: dict, detail_path):
-    name = raw_attrs.get("name") or "Unnamed Sponsor"
-    sid = stable_id(name)
-    contribution = raw_attrs.get("contribution")
-    contribution_amt = raw_attrs.get("contribution_amt")
-    contribution_unit = raw_attrs.get("contribution_unit")
-    affiliation = raw_attrs.get("affiliation")
-    past_involvement = raw_attrs.get("past_inv") or raw_attrs.get("past_involvement")
-    sponsor_page = raw_attrs.get("sponsor_page")
-    media_images = []
-    if raw_attrs.get("sponsor_img"):
-        media_images.append(raw_attrs.get("sponsor_img"))
-    media_images.extend(detail_meta.get("images", []))
+def combine_amt_and_unit(amt_raw, unit_raw):
+    if not amt_raw:
+        return None
+    val = str(amt_raw).strip()
+    if not val or val.upper() in ("N/A", "NONE", "-", ""):
+        return None
+    unit = (unit_raw or "").strip()
+    if unit:
+        return f"{val} {unit}"
+    return val
 
-    canonical = {
-        "id": sid,
-        "model_type": "sponsor",
-        "name": name,
+def normalize_to_final_shape(raw_attrs: dict, detail_meta: dict):
+    """
+    Convert sponsor-card attributes + detail page info into the final user-specified shape.
+    Returns a dict (no id) matching the requested format.
+    """
+    name = (raw_attrs.get("name") or "").strip()
+    image = raw_attrs.get("sponsor_img") or None
+    alt = raw_attrs.get("sponsor_alt") or None
+    contribution = raw_attrs.get("contribution") or None
+    contributionAmt = combine_amt_and_unit(raw_attrs.get("contribution_amt"), raw_attrs.get("contribution_unit"))
+    affiliation = raw_attrs.get("affiliation") or None
+    pastInvolvement = raw_attrs.get("past_inv") or raw_attrs.get("pastInvolvement") or None
+    about = detail_meta.get("description") or None
+    sponsor_link = detail_meta.get("website") or raw_attrs.get("sponsor_page") or None
+
+    obj = {
+        "name": name or None,
+        "image": image,
+        "alt": alt,
         "contribution": contribution,
-        "contribution_amt": contribution_amt,
-        "contribution_unit": contribution_unit,
+        "contributionAmt": contributionAmt,
         "affiliation": affiliation,
-        "past_involvement": past_involvement,
-        "sponsor_page": sponsor_page,
-        "contact": {
-            "phone": detail_meta.get("phone"),
-            "email": detail_meta.get("email"),
-            "website": detail_meta.get("website") or sponsor_page
-        },
-        "media": {
-            "images": media_images
-        },
-        "description": detail_meta.get("description"),
-        "raw_source": {
-            "url": str(SRC_MAIN),
-            "fetched_at": datetime.utcnow().isoformat() + "Z",
-            "source_id": str(detail_path) if detail_path else None
-        }
+        "pastInvolvement": pastInvolvement,
+        "about": about,
+        "sponsor_link": sponsor_link,
+        "type": "sponsor"
     }
-    return canonical
+    return obj
 
 def main():
     if not SRC_MAIN.exists():
@@ -155,25 +149,24 @@ def main():
         # dedupe by name (case-insensitive)
         name = (raw.get("name") or "").strip()
         if not name:
-            # fallback: skip unnamed sponsor
+            # skip unnamed sponsor
             continue
         name_key = name.lower()
         if name_key in seen_names:
-            # skip duplicate
             continue
         seen_names.add(name_key)
 
         # attempt to read detail page (relative)
         detail_html, detail_path = read_detail_page(raw.get("sponsor_page"))
-        detail_meta = parse_detail_fields(detail_html) if detail_html else {"phone":None,"email":None,"images":[], "description": None, "website": None}
+        detail_meta = parse_detail_fields(detail_html) if detail_html else {"images": [], "description": None, "website": None}
 
-        normalized = normalize_sponsor(raw, detail_meta, detail_path)
+        final_obj = normalize_to_final_shape(raw, detail_meta)
 
-        # write file (use id-based filename)
-        safe_fname = normalized["id"].replace(":", "_")
-        out_path = OUT_DIR / f"{safe_fname}.json"
+        # write file - **one JSON array containing the single object**
+        slug = slugify(name)
+        out_path = OUT_DIR / f"sponsor_{slug}.json"
         with out_path.open("w", encoding="utf-8") as f:
-            json.dump(normalized, f, indent=2)
+            json.dump([final_obj], f, indent=2)
         written.append(out_path)
         print("WROTE:", out_path)
 
