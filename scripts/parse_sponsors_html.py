@@ -1,23 +1,5 @@
 # scripts/parse_sponsors_html.py
 """
-Parse public/sponsors/sponsors.html, extract <sponsor-card> elements,
-follow local sponsor detail pages if present, and write normalized JSON files
-to data/normalized/.
-
-Output format (per file): a JSON list (array) containing a single object with keys:
-{
-  "name": "...",
-  "image": "...",
-  "alt": "...",
-  "contribution": "...",
-  "contributionAmt": "...",   # combined amount + unit or null
-  "affiliation": "...",
-  "pastInvolvement": "...",
-  "about": "...",
-  "sponsor_link": "...",
-  "type": "sponsor"
-}
-
 Run:
     python3 scripts/parse_sponsors_html.py
 """
