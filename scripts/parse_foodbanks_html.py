@@ -1,12 +1,11 @@
 # scripts/parse_foodbanks_and_details.py
 """
-Parse public/foodbanks/foodbanks.html and its local detail pages in
-public/foodbanks/*.html. Produce normalized JSON files in data/normalized/.
+Run:
+    python3 scripts/parse_foodbanks_html.py
 """
 
 import re
 import json
-import uuid
 from pathlib import Path
 from datetime import datetime
 from bs4 import BeautifulSoup
@@ -21,40 +20,38 @@ PHONE_RE = re.compile(r"(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}")
 CAPACITY_MEALS_RE = re.compile(r"([\d,]+)\s*meals", re.I)
 
 URGENCY_MAP = {
-    "very high": "very_high",
-    "very_high": "very_high",
-    "high": "high",
-    "medium": "medium",
-    "med": "medium",
-    "low": "low",
-    "unknown": "unknown"
+    "very high": "Very High",
+    "very_high": "Very High",
+    "high": "High",
+    "medium": "Medium",
+    "med": "Medium",
+    "low": "Low",
+    "unknown": "Unknown"
 }
 
-def make_id(prefix, name):
-    safe = re.sub(r"[^a-z0-9\-]+", "-", name.lower().strip())
-    safe = re.sub(r"-+", "-", safe).strip("-")
-    return f"{prefix}:{safe}-{uuid.uuid4().hex[:8]}"
+SITE_IMG_BASE = "https://foodbankconnect.me"  # used to convert local image paths to absolute if needed
+
+def slugify(text: str) -> str:
+    s = (text or "").lower().strip()
+    s = re.sub(r"[^a-z0-9]+", "-", s)
+    s = re.sub(r"-+", "-", s).strip("-")
+    return s or "foodbank"
 
 def canonicalize_urgency(raw):
     if not raw:
-        return "unknown"
-    s = raw.strip().lower()
-    s = s.replace("_", " ").replace("-", " ")
-    return URGENCY_MAP.get(s, "unknown")
+        return "Unknown"
+    s = raw.strip().lower().replace("_", " ").replace("-", " ")
+    return URGENCY_MAP.get(s, raw.strip())
 
 def parse_lat_lng_from_maps_src(src):
     if not src:
         return None, None
     m2 = re.search(r"!2d([-0-9\.]+)!3d([-0-9\.]+)", src)
     if m2:
-        lng = float(m2.group(1))
-        lat = float(m2.group(2))
-        return lat, lng
+        lng = float(m2.group(1)); lat = float(m2.group(2)); return lat, lng
     m3 = re.search(r"!3d([-0-9\.]+)!2d([-0-9\.]+)", src)
     if m3:
-        lat = float(m3.group(1))
-        lng = float(m3.group(2))
-        return lat, lng
+        lat = float(m3.group(1)); lng = float(m3.group(2)); return lat, lng
     mq = re.search(r"[?&]q=([-0-9\.]+),([-0-9\.]+)", src)
     if mq:
         return float(mq.group(1)), float(mq.group(2))
@@ -113,28 +110,30 @@ def extract_card_fields(card_soup):
 def read_detail_page(relative_href):
     if not relative_href:
         return None, None
-    href = relative_href.split("#")[0].split("?")[0]
+    href = str(relative_href).split("#")[0].split("?")[0]
     candidate = DETAILS_DIR / href
     if candidate.exists():
-        html = candidate.read_text(encoding="utf-8")
-        return html, candidate
+        return candidate.read_text(encoding="utf-8"), candidate
     candidate2 = SRC_MAIN.parent / href
     if candidate2.exists():
-        html = candidate2.read_text(encoding="utf-8")
-        return html, candidate2
+        return candidate2.read_text(encoding="utf-8"), candidate2
     candidate3 = ROOT / href
     if candidate3.exists():
-        html = candidate3.read_text(encoding="utf-8")
-        return html, candidate3
+        return candidate3.read_text(encoding="utf-8"), candidate3
     return None, None
 
 def parse_detail_fields(html):
-    """Return dict with phone, email, images[], programs[], description"""
-    out = {"phone": None, "email": None, "images": [], "programs": [], "description": None, "website": None}
+    """
+    Return {phone, email, images[], programs[], description, website, languages[], eligibility}
+    Best-effort heuristics.
+    """
+    out = {"phone": None, "email": None, "images": [], "programs": [], "description": None, "website": None, "languages": [], "eligibility": None}
     if not html:
         return out
     soup = BeautifulSoup(html, "lxml")
-    tel = soup.find("a", href=lambda x: x and x.startswith("tel:"))
+
+    # phone
+    tel = soup.find("a", href=lambda x: x and isinstance(x, str) and x.startswith("tel:"))
     if tel:
         out["phone"] = tel.get_text(strip=True)
     else:
@@ -143,24 +142,27 @@ def parse_detail_fields(html):
         if m:
             out["phone"] = m.group(0)
 
-    mail = soup.find("a", href=lambda x: x and x.startswith("mailto:"))
+    # email
+    mail = soup.find("a", href=lambda x: x and isinstance(x, str) and x.startswith("mailto:"))
     if mail:
         out["email"] = mail.get("href").split(":",1)[1].split("?")[0]
     else:
-        m = re.search(r"[\w\.-]+@[\w\.-]+\.\w+", txt)
+        m = re.search(r"[\w\.-]+@[\w\.-]+\.\w+", soup.get_text(" ", strip=True))
         if m:
             out["email"] = m.group(0)
 
-    imgs = soup.select("img")
-    for img in imgs:
+    # images (keep order)
+    for img in soup.select("img"):
         src = img.get("src")
         if src:
             out["images"].append(src)
 
-    site = soup.find("a", href=lambda x: x and x.startswith("http"))
+    # website: first absolute http(s) link
+    site = soup.find("a", href=lambda x: x and isinstance(x, str) and x.startswith("http"))
     if site:
         out["website"] = site.get("href")
 
+    # programs/services detection: headings or lists containing program/service/volunteer
     for header in soup.find_all(re.compile("^h[1-6]$")):
         htxt = header.get_text(" ", strip=True).lower()
         if "program" in htxt or "service" in htxt or "volunteer" in htxt:
@@ -175,86 +177,92 @@ def parse_detail_fields(html):
     for l in lists:
         out["programs"].extend([li.get_text(" ", strip=True) for li in l.find_all("li")])
 
+    # languages: look for explicit language list or 'English, Spanish' pattern
+    text_all = soup.get_text(" ", strip=True)
+    lang_match = re.search(r"(Languages|Available in):\s*([A-Za-z,\s]+)", text_all, re.I)
+    if lang_match:
+        langs = [l.strip() for l in lang_match.group(2).split(",") if l.strip()]
+        out["languages"] = langs
+    else:
+        # fallback: search for common languages in page
+        langs = []
+        for candidate in ["English", "Spanish"]:
+            if re.search(r"\b" + re.escape(candidate) + r"\b", text_all):
+                langs.append(candidate)
+        out["languages"] = langs
+
+    # eligibility: heuristic search for "ID" or "income" or "no ID"
+    eli = None
+    m_eli = re.search(r"(No ID required[^.]*|ID required[^.]*|income (guidelines|based)[^.]*)", text_all, re.I)
+    if m_eli:
+        eli = m_eli.group(0).strip()
+    out["eligibility"] = eli
+
+    # description: first meaningful paragraph
     p = soup.find("p")
     if p:
-        out["description"] = p.get_text(" ", strip=True)
+        out["description"] = re.sub(r"\s+", " ", p.get_text(" ", strip=True)).strip()
 
     return out
 
-def normalize_sponsor(raw_attrs: dict, detail_meta: dict, detail_path):
-    name = (raw_attrs.get("name") or "Unnamed Sponsor").strip()
-    sid = stable_id(name)
-
-    # contribution amount: try to coerce numeric, else keep original or None
-    contrib_raw = (raw_attrs.get("contribution_amt") or "").strip()
-    contrib_amt = None
-    if contrib_raw and contrib_raw.upper() not in ("N/A", "NONE", "-", ""):
-        # remove commas, currency symbols etc.
-        numeric = re.sub(r"[^\d\-]+", "", contrib_raw)
-        try:
-            contrib_amt = int(numeric) if numeric else None
-        except Exception:
-            contrib_amt = contrib_raw
-
-    contribution_unit = raw_attrs.get("contribution_unit")
-    contribution = raw_attrs.get("contribution")
-    affiliation = raw_attrs.get("affiliation")
-    past_involvement = raw_attrs.get("past_inv") or raw_attrs.get("past_involvement")
-
-    sponsor_page = raw_attrs.get("sponsor_page") or None
-
-    # collect images from the sponsor-card plus detail page, dedupe while preserving order
-    media_images = []
-    maybe_imgs = []
-    if raw_attrs.get("sponsor_img"):
-        maybe_imgs.append(raw_attrs.get("sponsor_img"))
-    maybe_imgs.extend(detail_meta.get("images", []) or [])
-    seen_imgs = set()
-    for u in maybe_imgs:
-        if not u:
-            continue
-        u_str = u.strip()
-        if u_str not in seen_imgs:
-            seen_imgs.add(u_str)
-            media_images.append(u_str)
-
-    # clean description: collapse whitespace/newlines
-    desc = detail_meta.get("description") or None
-    if isinstance(desc, str):
-        # collapse runs of whitespace to single space, and strip
-        desc_clean = re.sub(r"\s+", " ", desc).strip()
+def normalize_foodbank(raw, detail_meta, detail_path):
+    name = raw.get("name") or "Unknown Food Bank"
+    # capacity: prefer parsed meals_per_week if present, else raw string
+    cap = None
+    if raw.get("meals_per_week"):
+        cap = f"{raw['meals_per_week']} meals/week"
+    elif raw.get("capacity_raw"):
+        cap = raw.get("capacity_raw")
     else:
-        desc_clean = None
+        cap = None
 
-    # choose website: prefer absolute detail_meta website, else keep sponsor_page (relative)
-    website = detail_meta.get("website") or sponsor_page
+    # phone/email from detail page
+    phone = detail_meta.get("phone")
+    email = detail_meta.get("email")
 
-    canonical = {
-        "id": sid,
-        "model_type": "sponsor",
+    # services: programs list from detail page
+    services = detail_meta.get("programs") or []
+
+    # about from detail description
+    about = detail_meta.get("description") or None
+
+    # website: prefer absolute website from detail, else relative details_link if present
+    website = detail_meta.get("website") or (raw.get("details_link") or None)
+
+    # image: prefer first absolute image from detail_meta, else try to map first local image to SITE_IMG_BASE
+    image = None
+    for img in detail_meta.get("images", []):
+        if isinstance(img, str) and img.startswith("http"):
+            image = img
+            break
+    if not image:
+        # try to map a local image (../images/whatever.jpg) to SITE_IMG_BASE + path
+        if detail_meta.get("images"):
+            first = detail_meta["images"][0]
+            if isinstance(first, str):
+                p = first.lstrip("./")
+                image = SITE_IMG_BASE + "/" + p.lstrip("/")
+    # city and zipcode
+    city = raw.get("city")
+    zipcode = raw.get("zip") or raw.get("zipcode") or None
+
+    obj = {
+        "about": about,
+        "address": raw.get("address"),
+        "capacity": cap,
+        "city": city,
+        "eligibility": detail_meta.get("eligibility") or raw.get("eligibility") or None,
+        "image": image,
+        "languages": detail_meta.get("languages") or [],
         "name": name,
-        "contribution": contribution,
-        "contribution_amt": contrib_amt,
-        "contribution_unit": contribution_unit,
-        "affiliation": affiliation,
-        "past_involvement": past_involvement,
-        "sponsor_page": sponsor_page,
-        "contact": {
-            "phone": detail_meta.get("phone"),
-            "email": detail_meta.get("email"),
-            "website": website
-        },
-        "media": {
-            "images": media_images
-        },
-        "description": desc_clean,
-        "raw_source": {
-            "url": str(SRC_MAIN),
-            "fetched_at": datetime.utcnow().isoformat() + "Z",
-            "source_id": str(detail_path) if detail_path else None
-        }
+        "phone": phone,
+        "services": services,
+        "type": "foodbank",
+        "urgency": canonicalize_urgency(raw.get("urgency")),
+        "website": website,
+        "zipcode": zipcode
     }
-    return canonical
+    return obj
 
 def main():
     if not SRC_MAIN.exists():
@@ -274,9 +282,12 @@ def main():
         raw = extract_card_fields(card)
         details_href = raw.get("details_link")
         detail_html, detail_path = read_detail_page(details_href) if details_href else (None, None)
-        detail_meta = parse_detail_fields(detail_html) if detail_html else {"phone":None,"email":None,"images":[], "programs":[], "description": None, "website": None}
+        detail_meta = parse_detail_fields(detail_html) if detail_html else {"phone":None,"email":None,"images":[], "programs":[], "description": None, "website": None, "languages": [], "eligibility": None}
         normalized = normalize_foodbank(raw, detail_meta, detail_path)
-        out_path = OUT_DIR / f"{normalized['id'].replace(':','_')}.json"
+
+        # deterministic filename: foodbank_<slug>.json
+        slug = slugify(normalized.get("name") or raw.get("address") or details_href or "foodbank")
+        out_path = OUT_DIR / f"foodbank_{slug}.json"
         with out_path.open("w", encoding="utf-8") as f:
             json.dump(normalized, f, indent=2)
         print("WROTE:", out_path)
