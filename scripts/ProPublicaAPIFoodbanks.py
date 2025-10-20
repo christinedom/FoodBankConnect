@@ -20,7 +20,25 @@ def fetch_organization(ein: str):
         return None
     return resp.json()
 
-def scrape(q="food bank", state=None, max_results=500):
+def infer_services(text):
+    """
+    Infer services based on keywords in the about/mission text.
+    """
+    text = text.lower()
+    services = []
+    if "nutrition" in text:
+        services.append("Nutrition Education")
+    if "meal" in text or "food" in text or "pantry" in text:
+        services.append("Emergency Food Assistance")
+    if "training" in text or "culinary" in text:
+        services.append("Culinary Training Program")
+    if "snap" in text:
+        services.append("SNAP Outreach")
+    if not services:
+        services.append("Food Distribution")
+    return services
+
+def scrape(q="food bank", state=None, max_results=100):
     """
     Returns a list of JSON objects formatted for the FoodBank schema.
     Automatically fetches pages until max_results or API runs out.
@@ -47,13 +65,22 @@ def scrape(q="food bank", state=None, max_results=500):
             detail = fetch_organization(ein)
             if detail and "organization" in detail:
                 org_detail = detail["organization"]
-                about = org_detail.get("mission", "N/A")
+                about = (
+                    org_detail.get("mission")
+                    or org_detail.get("ntee_description")
+                    or org_detail.get("purpose")
+                    or "N/A"
+                )
                 address = org_detail.get("street", "N/A")
                 zipcode = org_detail.get("zipcode", "N/A")
+                phone = org_detail.get("telephone") or org_detail.get("phone") or "N/A"
             else:
                 about = "N/A"
                 address = "N/A"
                 zipcode = "N/A"
+                phone = "N/A"
+
+            services = infer_services(about)
 
             foodbank_json = {
                 "about": about,
@@ -64,10 +91,10 @@ def scrape(q="food bank", state=None, max_results=500):
                 "image": "N/A",
                 "languages": ["English"],
                 "name": name,
-                "phone": "N/A",
-                "services": ["N/A"],
+                "phone": phone,
+                "services": services,
                 "type": "foodbank",
-                "urgency": "N/A",
+                "urgency": "High",
                 "website": website if website else "N/A",
                 "zipcode": zipcode
             }
@@ -82,6 +109,6 @@ def scrape(q="food bank", state=None, max_results=500):
     return results
 
 if __name__ == "__main__":
-    # Example usage: fetch Texas food banks, up to 500 results
-    data = scrape(q="food bank", state="TX", max_results=500)
+    # Example usage: fetch Texas food banks, up to 100 results
+    data = scrape(q="food bank", state="TX", max_results=100)
     print(json.dumps(data, indent=2))
