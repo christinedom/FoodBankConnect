@@ -1,5 +1,8 @@
 # Project Proposal  
 
+- **Scrapers Repo:**
+  https://gitlab.com/dafrancc/fbc-scrapers
+
 - **Canvas / Slack group number:**  
   55085_07  
 
