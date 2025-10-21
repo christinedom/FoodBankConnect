@@ -4,7 +4,7 @@
 /* Reset and base styles - mobile first */
 :root{
   --bg: #1a1a1a;
-  --muted: #cccccc;
+  --muted: #eaeaea; /* brighter muted text */
   --btn-radius: 999px;
   --btn-padding: 0.75rem 1.25rem;
   --z-buttons: 25;
@@ -47,7 +47,7 @@ body {
 
 /* Main wrapper - center horizontally and vertically with safer sizing */
 #maintable {
-  position: fixed;          /* keeps the hero centered on top of bg */
+  position: fixed;          
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -65,7 +65,7 @@ body {
   max-width: 880px;
   margin: 1rem auto 0;
   z-index: 15;
-  transform: none; /* keep consistent spacing on small screens */
+  transform: none; 
 }
 
 #scrollbar {
@@ -99,7 +99,7 @@ body {
   box-sizing: border-box;
 }
 
-/* Background images - scale and stay behind content */
+/* Background images - slightly blurred and desaturated for readability */
 #bgtable {
   position: fixed;
   inset: 0;
@@ -107,15 +107,16 @@ body {
   height: 100vh;
   text-align: center;
   z-index: 1;
-  pointer-events: none; /* images don't block clicks */
+  pointer-events: none;
 }
 
 .bg-img {
   width: 100%;
   height: 100vh;
   object-fit: cover;
-  opacity: 0;
-  transition: opacity 2s;
+  opacity: 0.8; /* slightly transparent */
+  filter: blur(4px) grayscale(30%);
+  transition: opacity 2s, filter 2s;
   pointer-events: none;
 }
 
@@ -125,18 +126,19 @@ body {
 h1,h2,h3,h4,h5,h6 {
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: white;
+  color: #ffffff; /* brighter white for readability */
   text-align: center;
   margin: 0.5rem 0;
+  text-shadow: 0 0 0.75em rgba(0,0,0,0.7); /* improve readability */
 }
 
 p {
   font-size: 1rem;
   line-height: 1.6;
-  color: var(--muted);
+  color: #f5f5f5; /* brighter muted text */
   max-width: 60ch;
   margin: 0.9rem auto;
-  text-shadow: 0 0 0.5em #00000067;
+  text-shadow: 0 0 0.5em rgba(0,0,0,0.7); /* improved readability */
   padding: 0 0.5rem;
 }
 
@@ -170,7 +172,7 @@ button:hover, .button:hover, a.button:hover,
 /* thumb text - positioned between scroll bar and buttons; pointer-events none */
 #thumbtext {
   position: fixed;
-  bottom: 5.5rem;               /* mobile default: sits above the buttons */
+  bottom: 5.5rem;               
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
