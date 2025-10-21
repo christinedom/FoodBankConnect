@@ -12,6 +12,10 @@
 *::-webkit-scrollbar { display: none; }
 * { -ms-overflow-style: none; scrollbar-width: none; }
 
+.wrapper {
+    font-size: 15px;
+}
+
 .wrapper body {
     background-color: #1a1a1a;
     color: white;
@@ -31,7 +35,7 @@
     width: 12em;
     height: auto;
     display: block;
-    margin: 0 auto 1em auto;
+    margin: 0 auto .5em auto;
     z-index: 10;
 }
 
@@ -126,7 +130,8 @@
     letter-spacing: -0.02em;
     color: white;
     text-align: center;
-    margin-top: 0.5em;
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
 }
 
 /* Hero text - darker shadow for better readability */
@@ -194,4 +199,9 @@ button:hover, .button:hover, a.button:hover,
     z-index: 99999 !important;
     text-shadow: 0 0 0.75em #000;
     pointer-events: none;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: center;
 }
