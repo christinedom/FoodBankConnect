@@ -150,7 +150,7 @@ def scrape(q="food bank", state=None, max_results=MAX_RESULTS):
     return results
 
 if __name__ == "__main__":
-    data = scrape(q="food bank", state=None, max_results=10)
+    data = scrape(q="food bank", state=None, max_results=100)
     with open("foodbanks_programs.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
     print(f"✅ Scraped {len(data)//2} food banks and programs successfully.")
