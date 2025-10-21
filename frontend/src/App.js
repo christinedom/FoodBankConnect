@@ -8,7 +8,6 @@ import Sponsors from "./pages/Sponsors";
 import SponsorInstancePage from "./components/SponsorInstancePage";
 import ProgramsInstancePage from "./components/ProgramsInstancePage";
 import FoodbankInstancePage from "./components/FoodbankInstancePage";
-import NewHome from "./pages/NewHome"
 
 function App() {
 	return (
