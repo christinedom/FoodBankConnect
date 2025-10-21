@@ -3,6 +3,7 @@ import json
 import time
 
 BASE_URL = "https://projects.propublica.org/nonprofits/api/v2"
+MAX_RESULTS = 100
 
 def fetch_search(q="food bank", state=None, page=0):
     url = f"{BASE_URL}/search.json"
@@ -38,29 +39,29 @@ def infer_services(text):
         services.append("Food Distribution")
     return services
 
-def scrape(q="food bank", state=None, max_results=100):
+def scrape(q="food bank", state=None, max_results=MAX_RESULTS):
     """
-    Returns a list of JSON objects formatted for the FoodBank schema.
-    Automatically fetches pages until max_results or API runs out.
-    Missing fields are filled with 'N/A'.
+    Returns a list of JSON objects formatted for the FoodBank and Program schema.
+    Foodbanks and corresponding programs are returned in one array.
     """
     results = []
     page = 0
 
-    while len(results) < max_results:
+    while len(results)//2 < max_results:  # since we add a program per foodbank
         search_json = fetch_search(q=q, state=state, page=page)
         orgs = search_json.get("organizations", [])
         if not orgs:
             break
 
         for org in orgs:
-            if len(results) >= max_results:
+            if len(results)//2 >= max_results:
                 break
 
             ein = org.get("ein")
             name = org.get("name", "N/A")
             city = org.get("city", "N/A")
-            website = org.get("website", "N/A")
+            state_code = org.get("state", "N/A")
+            website = f"https://projects.propublica.org/nonprofits/organizations/{ein}" if ein else "N/A"
 
             detail = fetch_organization(ein)
             if detail and "organization" in detail:
@@ -69,37 +70,55 @@ def scrape(q="food bank", state=None, max_results=100):
                     org_detail.get("mission")
                     or org_detail.get("ntee_description")
                     or org_detail.get("purpose")
-                    or "N/A"
+                    or f"This is a nonprofit, tax exempt since {org_detail.get('tax_period', 'N/A')}."
                 )
-                address = org_detail.get("street", "N/A")
-                zipcode = org_detail.get("zipcode", "N/A")
+                zipcode = org_detail.get("zipcode") or org_detail.get("zip") or "N/A"
                 phone = org_detail.get("telephone") or org_detail.get("phone") or "N/A"
             else:
-                about = "N/A"
-                address = "N/A"
+                about = "This is a nonprofit, tax exempt."
                 zipcode = "N/A"
                 phone = "N/A"
 
-            services = infer_services(about)
+            services_list = infer_services(about)
 
+            # Build a unique program name using the foodbank name
+            program_name = f"{name} {' / '.join(services_list)} Program"
+
+            # Foodbank JSON
             foodbank_json = {
                 "about": about,
-                "address": address,
                 "capacity": "N/A",
                 "city": city,
+                "state": state_code,
                 "eligibility": "N/A",
                 "image": "N/A",
                 "languages": ["English"],
                 "name": name,
                 "phone": phone,
-                "services": services,
+                "services": [program_name],
                 "type": "foodbank",
                 "urgency": "High",
-                "website": website if website else "N/A",
+                "website": website,
                 "zipcode": zipcode
             }
 
+            # Program JSON
+            program_json = {
+                "name": program_name,
+                "program_type": "class" if "training" in program_name.lower() or "culinary" in program_name.lower() else "service",
+                "eligibility": "N/A",
+                "frequency": "Weekly",
+                "cost": "Free",
+                "host": name,
+                "detailsPage": program_name.replace(" ", "-").lower(),
+                "about": about,
+                "sign_up_link": website,
+                "type": "program"
+            }
+
             results.append(foodbank_json)
+            results.append(program_json)
+
             time.sleep(0.2)  # polite pause
 
         page += 1
@@ -109,6 +128,7 @@ def scrape(q="food bank", state=None, max_results=100):
     return results
 
 if __name__ == "__main__":
-    # Example usage: fetch Texas food banks, up to 100 results
-    data = scrape(q="food bank", state="TX", max_results=100)
-    print(f"✅ Scraped {len(data)} food banks successfully.")
+    data = scrape(q="food bank", max_results=10)  # <-- nationwide now
+    with open("foodbanks_programs.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+    print(f"✅ Scraped {len(data)//2} food banks and programs successfully.")
