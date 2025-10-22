@@ -16,23 +16,34 @@ const ProgramsInstancePage = () => {
 
   useEffect(() => {
     const fetchProgram = async () => {
-      if (!id) {
-        setLoading(false);
-        return;
-      }
       try {
-        const res = await fetch(`${BASE_URL}/${id}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setProgram(data);
+        let programData;
+        if (id) {
+          const res = await fetch(`${BASE_URL}/${id}`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          programData = await res.json();
+        } else if (location.state?.name) {
+          const res = await fetch(`${BASE_URL}?size=10&start=1`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          const target = (data.items || []).find(p => p.name === location.state.name);
+          if (!target) throw new Error("Program not found by name");
+          const res2 = await fetch(`${BASE_URL}/${target.id}`);
+          if (!res2.ok) throw new Error(`HTTP ${res2.status}`);
+          programData = await res2.json();
+        } else {
+          throw new Error("No id or name provided");
+        }
+        setProgram(programData);
       } catch (err) {
-        console.error("Error fetching program:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchProgram();
-  }, [id]);
+  }, [id, location.state]);
 
   const handleHostClick = async (hostName) => {
     try {

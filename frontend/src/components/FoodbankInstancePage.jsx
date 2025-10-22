@@ -17,25 +17,34 @@ const FoodbankInstancePage = () => {
 
   useEffect(() => {
     const fetchFoodbankDetails = async () => {
-      if (!id) {
-        setLoading(false);
-        return;
-      }
-
       try {
-        const response = await fetch(`${BASE_URL}/${id}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        setFoodbank(data);
+        let fbData;
+        if (id) {
+          const response = await fetch(`${BASE_URL}/${id}`);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          fbData = await response.json();
+        } else if (name) {
+          const res = await fetch(`${BASE_URL}?size=10&start=1`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          const target = (data.items || []).find(fb => fb.name === name);
+          if (!target) throw new Error("Foodbank not found by name");
+          const res2 = await fetch(`${BASE_URL}/${target.id}`);
+          if (!res2.ok) throw new Error(`HTTP ${res2.status}`);
+          fbData = await res2.json();
+        } else {
+          throw new Error("No id or name provided");
+        }
+        setFoodbank(fbData);
       } catch (err) {
-        console.error("Error fetching food bank:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchFoodbankDetails();
-  }, [id]);
+  }, [id, name]);
 
   const handleServiceClick = async (serviceName) => {
     try {
