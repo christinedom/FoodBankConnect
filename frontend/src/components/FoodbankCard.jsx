@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
+import '../styles/CardStyles.css';
 
-const FoodBankCard = ({ id, name, city, zipcode, urgency }) => {
+const FoodbankCard = ({ id, name, city, zipcode, urgency }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -11,7 +12,7 @@ const FoodBankCard = ({ id, name, city, zipcode, urgency }) => {
 
   return (
     <div
-      className="card h-100 shadow-sm"
+      className="card-glass h-100"
       style={{ cursor: "pointer" }}
       onClick={handleClick}
     >
@@ -21,9 +22,10 @@ const FoodBankCard = ({ id, name, city, zipcode, urgency }) => {
         <p><strong>ZIP Code:</strong> {zipcode || "N/A"}</p>
         <p><strong>Urgency:</strong> {urgency || "N/A"}</p>
         <p><strong>Eligibility:</strong> Everybody</p>
+        <button className="cta-button">See Details</button>
       </div>
     </div>
   );
 };
 
-export default FoodBankCard;
+export default FoodbankCard;
