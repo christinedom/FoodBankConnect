@@ -115,7 +115,7 @@ const About = () => {
           want people looking to volunteer to be able to find a multitude
           of programs and opportunities in which they can enroll. Lastly,
           we want possible sponsors and donors to find organizations
-          towards which they can put funding and support. <br /><br />
+          towards which they can direct funding and support. <br /><br />
         </p>
 
         <h2 className="mb-4">Meet the Team</h2>
@@ -147,7 +147,7 @@ const About = () => {
                         <a href="https://odinlimaye.com">odinlimaye.com</a>
                       </>
                     );
-                    responsibilities = "My main responsibilities have been handling our site's domain name and hosting on Amazon Web Services, along with front-end web development involving our API.";
+                    responsibilities = "My main responsibilities have been handling our site's domain name and hosting on Amazon Web Services, front-end development in regards to calling our RESTful API, and web scraping to populate our database.";
                     break;
                   case "Francisco":
                     bio = "I'm a Junior at UT Austin, but I externally transferred from Lone Star College - Montgomery and I am majoring in Computer Science. I like to play video games, watch movies and TV shows, exercise, cook, and be with family.";
@@ -187,7 +187,6 @@ const About = () => {
         <h2 className="mt-5">Data Sources</h2>
         <p>
           <a href="https://fdc.nal.usda.gov/api-guide">USDA</a><br />
-          <a href="https://mealconnect.docs.apiary.io/#">MealConnect</a><br />
           <a href="https://www.centraltexasfoodbank.org/">CentralTexasFoodbank</a><br />
           <a href="https://www.findhelp.org/">FindHelp</a><br />
           <a href="https://www.austintexas.gov/page/get-help-food-access-today">AustinTexasGetHelpFoodAccessToday</a><br />
@@ -215,11 +214,26 @@ const About = () => {
           buttons, and tables. We also used Bootstrap's formatting tools to create consistently styled headers,
           paragraphs, and text boxes.<br /><br />
         </p>
+          <strong>React:</strong><br />
+          We used React as the central framework for the front-end of our website, using it to create components 
+          and templates in our dynamic instance page and model page card generation. We also made use of React's routing
+          to organize the interconncted links within our site with the correct variable passing.<br /><br />
+        <p>
+          <strong>Beautiful Soup:</strong><br />
+          We used the Beautiful Soup library for Python to aid us in our web scraping when populating our database. This 
+          library provided helpful tools and objects for reading from HTML pages and navigating among the various sections 
+          in these HTML files.
+        </p>
+        <p>
+          <strong>Google Cloud API:</strong><br />
+          We made use of Google Cloud's programmatic search engine API in order to have our web scrapers be able to query
+          Google's search engine in order to search for images, logos, and website links related to our instances.
+        </p>
 
         <h2 className="mt-4">Links</h2>
         <p>
           <a href="https://gitlab.com/OdinLimaye/cs373-fall-2025-55085_07">GitLab Repository</a><br />
-          <a href="https://www.postman.com/downing-group-7/dafrancc-s-workspace/overview">Postman API</a>
+          <a href="https://www.postman.com/downing-group-7/dafrancc-s-workspace/collection/uhwer5y/food-bank-api-v2">Postman API</a>
         </p>
       </main>
 
