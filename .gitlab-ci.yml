@@ -43,7 +43,7 @@ deploy_website:
 
 # Run Selenium tests after deploy
 selenium_tests:
-  stage: selenium
+  stage: selenium_tests
   image: python:3.12-bullseye
   script:
     # Install dependencies
