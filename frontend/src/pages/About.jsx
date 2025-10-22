@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const About = () => {
   const [teamData, setTeamData] = useState([
-    { firstName: "Odin", fullName: "Odin Limaye", emails: ["odinlimaye1@gmail.com", "odin@cs.utexas.edu"], userID: "29883443", commits: 0, issuesOpened: 0, issuesClosed: 0 },
+    { firstName: "Odin", fullName: "Odin Limaye", emails: ["odinlimaye1@gmail.com"], userID: "29883443", commits: 0, issuesOpened: 0, issuesClosed: 0 },
     { firstName: "Mahika", fullName: "Mahika Dawar", emails: ["mahika.dawar@utexas.edu"], userID: "30052392", commits: 0, issuesOpened: 0, issuesClosed: 0 },
     { firstName: "Jose", fullName: "Jose Lopez", emails: ["jl82838@utexas.edu"], userID: "29919402", commits: 0, issuesOpened: 0, issuesClosed: 0 },
     { firstName: "Christine", fullName: "Christine Dominic", emails: ["cdominic@cs.utexas.edu"], userID: "30022393", commits: 0, issuesOpened: 0, issuesClosed: 0 },

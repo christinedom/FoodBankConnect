@@ -12,11 +12,18 @@ const Programs = () => {
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const itemsPerPage = 20;
+  const totalItems = 100; // Hardcoded total
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   useEffect(() => {
     async function fetchPrograms() {
       try {
-        const res = await fetch(`${BASE_URL}?size=10&start=1`);
+        setLoading(true);
+        const start = (currentPage - 1) * itemsPerPage + 1;
+        const res = await fetch(`${BASE_URL}?size=${itemsPerPage}&start=${start}`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setPrograms(data.items || []);
@@ -29,7 +36,7 @@ const Programs = () => {
     }
 
     fetchPrograms();
-  }, []);
+  }, [currentPage]);
 
   const filteredPrograms =
     filter === "all"
@@ -76,11 +83,34 @@ const Programs = () => {
         </div>
       </div>
 
-      <main className="container">
-        <p className="text-muted ms-2">
-          Showing {filteredPrograms.length} Program
-          {filteredPrograms.length !== 1 && "s"} in Total
-        </p>
+      <main className="container my-5">
+        {/* Top info and pagination */}
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <p className="mb-0">
+            Showing {filteredPrograms.length} programs
+          </p>
+          <div>
+            <button
+              className="btn btn-primary me-2"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+            >
+              Previous
+            </button>
+            <span>
+              Page {currentPage} / {totalPages}
+            </span>
+            <button
+              className="btn btn-primary ms-2"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+
+        {/* Program cards grid */}
         <div className="card-grid">
           {filteredPrograms.map((program) => (
             <ProgramCard
@@ -92,6 +122,27 @@ const Programs = () => {
               host={program.host}
             />
           ))}
+        </div>
+
+        {/* Bottom pagination (optional) */}
+        <div className="d-flex justify-content-center align-items-center mt-4">
+          <button
+            className="btn btn-primary me-2"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(currentPage - 1)}
+          >
+            Previous
+          </button>
+          <span>
+            Page {currentPage} / {totalPages}
+          </span>
+          <button
+            className="btn btn-primary ms-2"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(currentPage + 1)}
+          >
+            Next
+          </button>
         </div>
       </main>
 

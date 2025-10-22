@@ -9,39 +9,31 @@ const BASE_URL = "https://api.foodbankconnect.me/v1/foodbanks";
 const Foodbanks = () => {
   const [foodbanks, setFoodbanks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const PAGE_SIZE = 20;
-  const TOTAL_ITEMS = 100;
-  const TOTAL_PAGES = Math.ceil(TOTAL_ITEMS / PAGE_SIZE);
-
-  const fetchFoodBanks = async (pageNum) => {
-    setLoading(true);
-    try {
-      const start = (pageNum - 1) * PAGE_SIZE + 1;
-      const response = await fetch(`${BASE_URL}?size=${PAGE_SIZE}&start=${start}`);
-      if (!response.ok) throw new Error("Failed to fetch food banks");
-      const data = await response.json();
-      setFoodbanks(data.items || []);
-    } catch (error) {
-      console.error("Error fetching food banks:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+  const totalItems = 100; // Hardcoded total since API doesn't provide it
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   useEffect(() => {
-    fetchFoodBanks(page);
-  }, [page]);
+    const fetchFoodBanks = async () => {
+      try {
+        setLoading(true);
+        const start = (currentPage - 1) * itemsPerPage + 1;
+        const response = await fetch(`${BASE_URL}?size=${itemsPerPage}&start=${start}`);
+        if (!response.ok) throw new Error("Failed to fetch food banks");
+        const data = await response.json();
+        setFoodbanks(data.items || []);
+      } catch (error) {
+        console.error("Error fetching food banks:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handlePrev = () => {
-    if (page > 1) setPage(page - 1);
-  };
+    fetchFoodBanks();
+  }, [currentPage]);
 
-  const handleNext = () => {
-    if (page < TOTAL_PAGES) setPage(page + 1);
-  };
-
-  if (loading) return <div className="container my-5 text-center">Loading...</div>;
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div id="wrapper">
@@ -49,6 +41,33 @@ const Foodbanks = () => {
       <Header headerText="Food Banks" />
 
       <main className="container my-5">
+        {/* Top info and pagination */}
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <p className="mb-0">
+            Showing {foodbanks.length} foodbanks
+          </p>
+          <div>
+            <button
+              className="btn btn-primary me-2"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+            >
+              Previous
+            </button>
+            <span>
+              Page {currentPage} / {totalPages}
+            </span>
+            <button
+              className="btn btn-primary ms-2"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+
+        {/* Foodbanks grid */}
         <div className="row g-4">
           {foodbanks.map((bank) => (
             <div key={bank.id} className="col-md-4">
@@ -63,24 +82,24 @@ const Foodbanks = () => {
           ))}
         </div>
 
-        {/* Pagination Controls */}
+        {/* Bottom pagination (optional) */}
         <div className="d-flex justify-content-center align-items-center mt-4">
           <button
-            className="btn btn-outline-primary mx-2"
-            onClick={handlePrev}
-            disabled={page === 1}
+            className="btn btn-primary me-2"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(currentPage - 1)}
           >
-            ← Previous
+            Previous
           </button>
           <span>
-            Page {page} / {TOTAL_PAGES}
+            Page {currentPage} / {totalPages}
           </span>
           <button
-            className="btn btn-outline-primary mx-2"
-            onClick={handleNext}
-            disabled={page === TOTAL_PAGES}
+            className="btn btn-primary ms-2"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(currentPage + 1)}
           >
-            Next →
+            Next
           </button>
         </div>
       </main>
