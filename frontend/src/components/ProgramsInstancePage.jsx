@@ -80,25 +80,28 @@ const ProgramsInstancePage = () => {
       <Breadcrumb model_type="programs" current_page={program.name} />
 
       <main className="container my-5">
-        <div className="row">
-          <div className="col-lg-6 mb-4">
+        <div className="row align-items-center">
+          {/* Image on the left */}
+          <div className="col-lg-6 mb-4 text-center">
             {program.image ? (
               <img
                 src={program.image}
                 className="img-fluid rounded shadow"
                 alt={program.name}
+                style={{ maxHeight: "400px", objectFit: "cover" }}
               />
             ) : (
               <div className="text-muted">No image available</div>
             )}
           </div>
 
-          <div className="col-lg-6">
-            <h3 className="fw-bold">Program Details</h3>
-            <ul className="list-group mb-3">
-              <li><strong>Frequency:</strong> {program.frequency}</li>
+          {/* Text content on the right, centered */}
+          <div className="col-lg-6 text-center">
+            <h3 className="fw-bold mb-4">Program Details</h3>
+            <ul className="list-unstyled">
+              <li><strong>Frequency:</strong> {program.frequency || "N/A"}</li>
               <li><strong>Eligibility:</strong> Everybody</li>
-              <li><strong>Cost:</strong> {program.cost}</li>
+              <li><strong>Cost:</strong> {program.cost || "N/A"}</li>
               <li>
                 <strong>Host:</strong>{" "}
                 {program.host ? (
@@ -109,22 +112,34 @@ const ProgramsInstancePage = () => {
                   "N/A"
                 )}
               </li>
-              <li><strong>Sign Up / Learn More:</strong> {program.sign_up_link || "N/A"}</li>
-
-              {/* Sponsor link */}
-              <div className="mt-3">
-                <h5>Related Sponsor:</h5>
-                <a href="#" onClick={handleSponsorClick}>
-                  View Sponsor
-                </a>
-              </div>
+              <li>
+                <strong>Sign Up / Learn More:</strong>{" "}
+                {program.sign_up_link ? (
+                  <a href={program.sign_up_link} target="_blank" rel="noreferrer">
+                    Sign Up Page
+                  </a>
+                ) : (
+                  "N/A"
+                )}
+              </li>
             </ul>
           </div>
         </div>
 
-        <section className="mt-5">
+        {/* About section */}
+        <section className="mt-5 text-center">
           <h3>About the Program</h3>
-          <p>{program.about || "No description available."}</p>
+          <p className="mt-2">{program.about || "No description available."}</p>
+        </section>
+
+        {/* Related sponsor */}
+        <section className="mt-5 text-center">
+          <h3>Related Sponsor</h3>
+          <p className="mt-2">
+            <a href="#" onClick={handleSponsorClick}>
+              View Sponsor
+            </a>
+          </p>
         </section>
       </main>
 

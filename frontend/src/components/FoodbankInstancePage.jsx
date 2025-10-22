@@ -109,7 +109,7 @@ const FoodbankInstancePage = () => {
               <strong>Website:</strong>{" "}
               {foodbank.website ? (
                 <a href={foodbank.website} target="_blank" rel="noreferrer">
-                  {foodbank.website}
+                  Official Website
                 </a>
               ) : (
                 "N/A"
@@ -124,14 +124,14 @@ const FoodbankInstancePage = () => {
         </section>
 
         {/* Linked Programs Section */}
-        <section className="mt-5">
+        <section className="mt-5 text-center">
           <h3>Programs Hosted by This Food Bank</h3>
           {programsLoading ? (
             <p>Loading programs...</p>
           ) : programs.length > 0 ? (
-            <ul style={{ listStyle: "none", padding: 0 }}>
+            <div>
               {programs.map((program) => (
-                <li key={program.id} style={{ marginBottom: "0.5rem" }}>
+                <p key={program.id}>
                   <a
                     href="#"
                     onClick={(e) => {
@@ -141,20 +141,22 @@ const FoodbankInstancePage = () => {
                   >
                     {program.name}
                   </a>
-                </li>
+                </p>
               ))}
-            </ul>
+            </div>
           ) : (
             <p>No hosted programs found for this food bank.</p>
           )}
         </section>
 
         {/* Sponsor Navigation */}
-        <section className="mt-4">
+        <section className="mt-4 text-center">
           <h3>Related Sponsor</h3>
-          <a href="#" onClick={handleSponsorClick}>
-            View Sponsor
-          </a>
+          <p>
+            <a href="#" onClick={handleSponsorClick}>
+              View Sponsor
+            </a>
+          </p>
         </section>
       </main>
 
