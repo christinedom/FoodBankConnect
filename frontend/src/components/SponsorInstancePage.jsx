@@ -29,7 +29,7 @@ const SponsorInstancePage = () => {
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const data = await res.json();
 			if (data.items && data.items.length > 0) {
-				return data.items[0].link;
+				return data.items[0].link; // use direct image link
 			}
 		} catch (err) {
 			console.error("Error fetching Google image:", err);
@@ -86,7 +86,7 @@ const SponsorInstancePage = () => {
 				<div className={`${styles["sponsor-img-container"]} text-center mb-4`}>
 					{sponsor.image && (
 						<img
-							src={`https://images.weserv.nl/?url=${encodeURIComponent(sponsor.image)}`}
+							src={sponsor.image} // use direct URL
 							alt={sponsor.alt || sponsor.name + " Logo"}
 						/>
 					)}
