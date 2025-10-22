@@ -36,12 +36,12 @@ const FoodbankInstancePage = () => {
     fetchFoodbankDetails();
   }, [id]);
 
-  // Show test info on screen instead of generic "Loading..."
+  // Display debug info if still loading
   if (loading) {
     return (
       <div className="container my-5">
         <h2>Loading Food Bank Details...</h2>
-        <p>Test: Reached instance page!</p>
+        <p>Reached instance page!</p>
         <p>ID: {id || "N/A"}</p>
         <p>Name: {name || "N/A"}</p>
       </div>
@@ -68,24 +68,28 @@ const FoodbankInstancePage = () => {
         <section className="mb-4">
           <h2>Details</h2>
           <ul style={{ listStyle: "none", padding: 0 }}>
+            <li><strong>ID:</strong> {foodbank.id || "N/A"}</li>
+            <li><strong>Name:</strong> {foodbank.name || "N/A"}</li>
+            <li><strong>About:</strong> {foodbank.about || "N/A"}</li>
+            <li><strong>Website:</strong>{" "}
+              {foodbank.website ? (
+                <a href={foodbank.website} target="_blank" rel="noreferrer">{foodbank.website}</a>
+              ) : "N/A"}
+            </li>
+            <li><strong>Phone:</strong> {foodbank.phone || "N/A"}</li>
+            <li><strong>Image:</strong> {foodbank.image || "N/A"}</li>
             <li><strong>Address:</strong> {foodbank.address || "N/A"}</li>
             <li><strong>City:</strong> {foodbank.city || "N/A"}</li>
             <li><strong>State:</strong> {foodbank.state || "N/A"}</li>
             <li><strong>ZIP Code:</strong> {foodbank.zipcode || "N/A"}</li>
-            <li><strong>Capacity:</strong> {foodbank.capacity || "N/A"}</li>
             <li><strong>Urgency:</strong> {foodbank.urgency || "N/A"}</li>
+            <li><strong>Capacity:</strong> {foodbank.capacity || "N/A"}</li>
             <li><strong>Languages:</strong> {foodbank.languages?.join(", ") || "N/A"}</li>
             <li><strong>Services:</strong> {foodbank.services?.join(", ") || "N/A"}</li>
+            <li><strong>Open Hours:</strong> {foodbank.open_hours || "N/A"}</li>
             <li><strong>Eligibility:</strong> {foodbank.eligibility || "N/A"}</li>
-            <li><strong>Phone:</strong> {foodbank.phone || "N/A"}</li>
-            {foodbank.website && (
-              <li style={{ marginTop: "10px" }}>
-                <strong>Website:</strong>{" "}
-                <a href={foodbank.website} target="_blank" rel="noreferrer">
-                  {foodbank.website}
-                </a>
-              </li>
-            )}
+            <li><strong>Fetched At:</strong> {foodbank.fetched_at || "N/A"}</li>
+            <li><strong>Created At:</strong> {foodbank.created_at || "N/A"}</li>
           </ul>
         </section>
       </main>

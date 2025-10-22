@@ -1,71 +1,79 @@
-import { useLocation, Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import Header from "./Header";
 import Footer from "./Footer";
 import Breadcrumb from "./Breadcrumb";
 
+const BASE_URL = "https://api.foodbankconnect.me/v1/programs";
+
 const ProgramsInstancePage = () => {
-	const location = useLocation();
-	const {
-		name,
-		type,
-		elig,
-		freq,
-		cost,
-		img,
-		about,
-		sign_up_link,
-	} = location.state || {};
-	return (
-		<div className="wrapper">
-			<Navbar />
-			<Header headerText={name}/>
-			<Breadcrumb model_type="programs" current_page={name} />
+  const location = useLocation();
+  const { id } = location.state || {};
+  const [program, setProgram] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-			<main className="container my-5">
-				<div className="row">
-					<div className="col-lg-6 mb-4">
-						<img
-							src={img}
-							className="img-fluid rounded shadow"
-							alt={name}
-						/>
-					</div>
-					<div className="col-lg-6">
-						<h3 className="fw-bold" style={{textAlign:"left"}}>Program Details</h3>
-						<ul className="list-group mb-3">
-							<li className="list-group-item">
-								<strong>Type:</strong> {type}
-							</li>
-							<li className="list-group-item">
-								<strong>Eligibility:</strong> {elig}
-							</li>
-							<li className="list-group-item">
-								<strong>Frequency:</strong> {freq}
-							</li>
-							<li className="list-group-item">
-								<strong>Cost:</strong> {cost}
-							</li>
-							<li className="list-group-item">
-								<strong>Host:</strong> <a href="../foodbanks/austin-central.html"> Central Texas Food Bank</a>
-							</li>
-						</ul>
-						<a
-							href={sign_up_link}
-							target="_blank"
-							className="btn btn-primary">
-							Learn More
-						</a>
-					</div>
-				</div>
+  useEffect(() => {
+    const fetchProgram = async () => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch(`${BASE_URL}/${id}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setProgram(data);
+      } catch (err) {
+        console.error("Error fetching program:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProgram();
+  }, [id]);
 
-				<section className="mt-5">
-					<h3 style={{textAlign:"left"}}>About the Program</h3>
-					<p>{about}</p>
-				</section>
-			</main>
-			<Footer/>
-		</div>
-	);
+  if (loading) return <div className="container my-5">Loading program details...</div>;
+  if (!program) return <div className="container my-5">Program not found.</div>;
+
+  return (
+    <div className="wrapper">
+      <Navbar />
+      <Header headerText={program.name} />
+      <Breadcrumb model_type="programs" current_page={program.name} />
+
+      <main className="container my-5">
+        <div className="row">
+          <div className="col-lg-6 mb-4">
+            {program.image && <img src={program.image} className="img-fluid rounded shadow" alt={program.name} />}
+          </div>
+          <div className="col-lg-6">
+            <h3 className="fw-bold">Program Details</h3>
+            <ul className="list-group mb-3">
+              <li className="list-group-item"><strong>Type:</strong> {program.program_type}</li>
+              <li className="list-group-item"><strong>Eligibility:</strong> {program.eligibility}</li>
+              <li className="list-group-item"><strong>Frequency:</strong> {program.frequency}</li>
+              <li className="list-group-item"><strong>Cost:</strong> {program.cost}</li>
+              <li className="list-group-item"><strong>Host:</strong> {program.host}</li>
+              {program.sign_up_link && (
+                <li className="list-group-item">
+                  <strong>Sign Up / Learn More:</strong>{" "}
+                  <a href={program.sign_up_link} target="_blank" rel="noreferrer">{program.sign_up_link}</a>
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
+
+        <section className="mt-5">
+          <h3>About the Program</h3>
+          <p>{program.about || "No description available."}</p>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
+  );
 };
+
 export default ProgramsInstancePage;

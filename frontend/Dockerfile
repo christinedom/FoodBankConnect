@@ -1,20 +1,20 @@
 # Use the official Node.js image
 FROM node:20
 
-# Set the container's working directory to app
+# Set the working directory inside the container
 WORKDIR /app
 
-# For caching purposes
+# Copy package.json and package-lock.json first for caching
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy all the frontend source code into the container
+# Copy the rest of the application code
 COPY . .
 
-# Expose React’s development server port
+# Expose React development server port
 EXPOSE 3000
 
-# Start the React development server
-CMD ["npm", "start"]
+# Start React dev server with polling enabled for file changes
+CMD ["sh", "-c", "CHOKIDAR_USEPOLLING=true CHOKIDAR_INTERVAL=1000 npm start"]
