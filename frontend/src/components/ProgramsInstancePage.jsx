@@ -73,9 +73,21 @@ const ProgramsInstancePage = () => {
               <li className="list-group-item"><strong>ID:</strong> {program.id}</li>
               <li className="list-group-item"><strong>Type:</strong> {program.program_type}</li>
               <li className="list-group-item"><strong>Frequency:</strong> {program.frequency}</li>
-              <li className="list-group-item"><strong>Eligibility:</strong> {program.eligibility}</li>
+              <li className="list-group-item">
+                <strong>Eligibility:</strong> {program.eligibility || "Everybody"}
+              </li>
               <li className="list-group-item"><strong>Cost:</strong> {program.cost}</li>
-              <li className="list-group-item"><strong>Host:</strong> {program.host}</li>
+              <li className="list-group-item">
+                <strong>Host:</strong>{" "}
+                {program.host ? (
+                  <a
+                    href={`/foodbanks/${encodeURIComponent(program.host)}`}
+                    state={{ id: null }}
+                  >
+                    {program.host}
+                  </a>
+                ) : "N/A"}
+              </li>
               <li className="list-group-item"><strong>Details Page:</strong> {program.details_page}</li>
               <li className="list-group-item">
                 <strong>Sign Up / Learn More:</strong>{" "}
@@ -83,9 +95,7 @@ const ProgramsInstancePage = () => {
                   <a href={program.sign_up_link} target="_blank" rel="noreferrer">
                     {program.sign_up_link}
                   </a>
-                ) : (
-                  "N/A"
-                )}
+                ) : "N/A"}
               </li>
               <li className="list-group-item"><strong>Links:</strong> {program.links || "N/A"}</li>
               <li className="list-group-item"><strong>Created At:</strong> {program.created_at}</li>

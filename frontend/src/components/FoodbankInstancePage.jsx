@@ -36,7 +36,6 @@ const FoodbankInstancePage = () => {
     fetchFoodbankDetails();
   }, [id]);
 
-  // Display debug info if still loading
   if (loading) {
     return (
       <div className="container my-5">
@@ -85,7 +84,22 @@ const FoodbankInstancePage = () => {
             <li><strong>Urgency:</strong> {foodbank.urgency || "N/A"}</li>
             <li><strong>Capacity:</strong> {foodbank.capacity || "N/A"}</li>
             <li><strong>Languages:</strong> {foodbank.languages?.join(", ") || "N/A"}</li>
-            <li><strong>Services:</strong> {foodbank.services?.join(", ") || "N/A"}</li>
+            <li>
+              <strong>Services:</strong>{" "}
+              {foodbank.services?.length ? (
+                foodbank.services.map((service, idx) => (
+                  <span key={idx}>
+                    <a
+                      href={`/programs/${encodeURIComponent(service)}`}
+                      state={{ id: null }}
+                    >
+                      {service}
+                    </a>
+                    {idx < foodbank.services.length - 1 ? ", " : ""}
+                  </span>
+                ))
+              ) : "N/A"}
+            </li>
             <li><strong>Open Hours:</strong> {foodbank.open_hours || "N/A"}</li>
             <li><strong>Eligibility:</strong> {foodbank.eligibility || "N/A"}</li>
             <li><strong>Fetched At:</strong> {foodbank.fetched_at || "N/A"}</li>

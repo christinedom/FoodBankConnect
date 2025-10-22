@@ -3,8 +3,6 @@ import styles from "./SponsorCard.module.css";
 
 const SponsorCard = ({
 	id,
-	sponsor_img,
-	sponsor_alt,
 	name,
 	affiliation,
 	city,
@@ -24,9 +22,6 @@ const SponsorCard = ({
 			onClick={handleClick}
 			style={{ cursor: "pointer" }}
 		>
-			<div className={styles["sponsor-img-container"]}>
-				<img src={sponsor_img} alt={sponsor_alt} />
-			</div>
 			<div className={styles["card-body"]}>
 				<p className={styles["text"]}>
 					<strong>Name:</strong> {name}
