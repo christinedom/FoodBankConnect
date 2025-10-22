@@ -11,7 +11,7 @@ FoodBankConnect is a community-focused web platform that aggregates, normalizes,
 Primary public surfaces:
 
 * Public website: `https://foodbankconnect.me`
-* API documentation / tests: Postman collection (public)
+* API documentation: `https://www.postman.com/downing-group-7/dafrancc-s-workspace/overview`
 
 ---
 
@@ -23,6 +23,8 @@ Primary public surfaces:
 
    * One Python scraper per source (repo: `https://gitlab.com/dafrancc/fbc-scrapers`).
    * Scrapers convert raw HTML/JSON into a canonical JSON format and save locally. 
+   * The primary scrapers used to populate our database make use of the 
+   API's of public internet sources such as ProPublica.
 
 2. **Storage layer (Database)**
 
@@ -30,19 +32,19 @@ Primary public surfaces:
 
 3. **API layer (Backend)**
 
-   * Backend is a Python REST service. Endpoints implemented to serve model collections and individual instances.
-   * We used AWS to host our site. 
+   * Our back-end is a Python REST service. Endpoints are implemented to serve model collections and individual instances (GET endpoints for both).
+   * We used AWS to host our site as an EC2 server using Flask. 
 
 4. **Frontend (Client)**
 
    * React single page app (repo root `public`/`src`). Pages render model grids, instance pages, and maps.
    * Consumes backend API under `/api/`.
-   * Hosted as static site on AWS. 
+   * Hosted as static site on AWS using the S3 bucket. 
 
 5. **CI/CD**
 
    * GitLab pipelines configured (see: `https://gitlab.com/OdinLimaye/cs373-fall-2025-55085_07/-/pipelines`).
-   * Pipelines run tests, build Docker images, run Postman tests, and deploy to AWS.
+   * Pipelines run tests, build Docker images, run Postman tests, and deploy to AWS upon success.
 
 6. **Tools & integrations**
 
@@ -65,12 +67,15 @@ Diagram (logical):
 ### 3.1 FoodBank / FoodPantry
 
 * `about`
-* `address` (street, city, state, zip)
+* `city`
+* `zip`
+* `state`
 * `capacity` (e.g., meals/week)
 * `name` 
 * `urgency` (low/medium/high)
 * `website`
 * `zipcode` 
+* `image`
 
 ### 3.2 Program / Service
 
@@ -80,6 +85,8 @@ Diagram (logical):
 * `frequency`
 * `cost`
 * `host` 
+* `signup_link`
+* `image`
 
 ### 3.3 Sponsor / Donor
 
@@ -88,7 +95,8 @@ Diagram (logical):
 * `alt` 
 * `contribution`
 * `affiliation`
-* `type` 
+* `type`
+* `website` 
 
 ---
 
@@ -97,7 +105,7 @@ Diagram (logical):
 **Primary scraped sources (examples)**
 
 * ProPublica nonprofit API — `https://projects.propublica.org/nonprofits/api`
-And More 
+* Google search enging API using Google Cloud services
 
 **Scraper repo**: `https://gitlab.com/dafrancc/fbc-scrapers`
 
@@ -108,7 +116,7 @@ And More
   1. Fetches data via REST API or performs HTML parsing with `requests` + `BeautifulSoup`.
   2. Normalizes vendor-specific fields into canonical schema (the three model types).
   3. Writes canonical JSON files to `scraped/` or directly seeds the DB using a bulk import script.
-  4. Produces an example JSON per source (e.g., `foodbank_example.json`, `program_example.json`, `sponsor_example.json`).
+  4. References an example JSON per source (e.g., `foodbank_example.json`, `program_example.json`, `sponsor_example.json`).
 
 ---
 
@@ -120,41 +128,44 @@ And More
 
 **FoodBanks**
 
-* `GET /api/foodbanks` — returns paginated list of foodbanks.
+* `GET /api/foodbanks?` — returns a specified range of the list of foodbanks.
 
-  * Query params: `page` (int), `per_page` (int), `sort` (e.g., `capacity:desc`), `filter` (JSON or simple params e.g., `city=Austin&urgency=high`).
-  * Example: `https://foodbankconnect.me/api/foodbanks?page=1&per_page=20`
+  * Query params: `size` (int), `start` (int)
+  * Example: `https://foodbankconnect.me/api/v1/foodbanks?size=10&start=1`
 
 * `GET /api/foodbanks/<id>` — returns a single foodbank instance.
 
-  * Example: `https://foodbankconnect.me/api/foodbanks/123`
+  * Query params: `ID` (int)
+  * Example: `https://foodbankconnect.me/api/v1/foodbanks/123`
 
 **Programs**
 
-* `GET /api/programs` — paginated list.
+* `GET /api/programs` — returns a specified range of the list of programs.
 
-  * Query params: `page`, `per_page`, `program_type`, `frequency`, `city`.
-  * Example: `https://foodbankconnect.me/api/programs?program_type=distribution&page=1`
+  * Query params: `size` (int), `start` (int)
+  * Example: `https://foodbankconnect.me/api/v1/programs?size=10&start=1`
 
-* `GET /api/programs/<id>` — program details, linked foodbanks and sponsors.
+* `GET /api/programs/<id>` — returns a single program instance.
+
+   * Query params: `ID` (int)
+   * Example: `https://foodbankconnect.me/api/v1/programs/123`
 
 **Sponsors**
 
-* `GET /api/sponsors` — paginated list.
+* `GET /api/sponsors` — returns a specified range of the list of sponsors.
 
-  * Example: `https://foodbankconnect.me/api/sponsors?page=1&per_page=25`
+  * Query params: `size` (int), `start` (int)
+  * Example: `https://foodbankconnect.me/api/v1/sponsors?size=10&start=1`
 
-* `GET /api/sponsors/<id>` — sponsor details, contributions, linked programs/foodbanks.
+* `GET /api/sponsors/<id>` — 
 
-**Auxiliary endpoints**
-
-* `GET /api/search` — multi-model search (query param `q`). Returns grouped results per model.
-* `GET /api/health` — test endpoint for CI to verify service is up. Example: `https://foodbankconnect.me/api/health`
+   * Query params: `ID` (int)
+   * Example: `https://foodbankconnect.me/api/v1/sponsors/123`
 
 **Response format**
 
-* All collection endpoints return JSON with metadata for pagination: `{ "data": [ ... ], "meta": { "page": 1, "per_page": 20, "total": 700, "total_pages": 35 } }`.
-* Instance endpoints return `{ "data": { ... } }`.
+* All collection endpoints return JSON with metadata for pagination: a list of instance endpoint returns followed by metadata (fetched_at, created_at).
+* Instance endpoints return: values for all of the attributes listed above along with metadata (fetched_at, created_at).
 
 ## 6. Database Implementation (Phase II focus)
 
@@ -169,13 +180,7 @@ And More
 
 **Pagination**
 
-* Endpoints support `page` and `per_page`. Default `per_page` = 20; maximum enforced (e.g., 100).
-
-**Indexing & performance**
-
-* Index on `city`, `zip`, `urgency_level`, and `program_type`.
-
----
+* Our API handles dynamic ranges with the GET range endpoint for each model, so paginating can be determined entirely by clients. Our frontend does so by paging in groups of 20 until the database is exhausted, which at the moment produces an even 5 pages since our database has 100 instances per model. Additionally, the start_at parameter in the GET range endpoint makes clients handle the tracking of their parsing through the databse, matching the fact that they can page flexibly by specifying ranges.
 
 ## 7. Frontend Implementation
 
@@ -192,7 +197,7 @@ And More
 
 **Design**
 
-* Uses Bootstrap (or React-Bootstrap) responsive grid system. NavBar present site-wide.
+* Uses Bootstrap responsive grid system. NavBar present site-wide.
 * Instance pages reuse card components to keep consistent presentation.
 
 **Client-side data handling**
@@ -202,19 +207,17 @@ And More
 
 **Testing**
 
-* Acceptance tests for flows (search, pagination, instance page load).
-
----
+* Acceptance tests for flows (search, pagination, instance page load) are handled by Selenium. Per-component unit tests are handled by JEST. API endpoint testing is handled by Postman. Backend testing is handled on our API server. All tests are run through the GitLab CI.
 
 ## 8. Phase II Features & Implementation Details
 
 This project’s Phase II required database integration, API endpoints, pagination, and instance pages. Summary of implementations:
 
 * **Database**: PostgreSQL schema created.
-* **Pagination**: Implemented for each collection endpoint — page, per_page, and meta returned.
-* **Instance Pages**: Many instance pages generated dynamically by React using API endpoints; at least 100 instances per model seeded (ProPublica scripts provided ~100 good instances).
+* **Pagination**: Implemented via the GET range endpoint, allowing for dynamic, and even non-linear, paging from clients.
+* **Instance Pages**: All instance pages generated dynamically by React using API endpoints; at least 100 instances per model seeded (ProPublica scripts provided ~100 good instances).
 * **API Docs**: Postman collection public and linked from site (About page links to Postman).
-* **Media**: Each instance supports multiple media items (images and videos/links). Media stored as URLs in DB; frontend renders with lazy-loading.
+* **Media**: Each instance supports multiple media items (images and links). Media stored as URLs in DB; frontend renders with lazy-loading.
 
 ---
 
@@ -235,7 +238,7 @@ This project’s Phase II required database integration, API endpoints, paginati
 
 **GitLab CI**
 
-* Configured to run linting, unit tests, Postman tests, build Docker images, and deploy on success.
+* Configured to run unit tests, Postman tests, build Docker images, and deploy on success.
 * Link to pipelines: `https://gitlab.com/OdinLimaye/cs373-fall-2025-55085_07/-/pipelines`
 
 ---
@@ -244,54 +247,36 @@ This project’s Phase II required database integration, API endpoints, paginati
 
 **Hosting choices**
 
-* **Frontend**: Static site hosted on AWS or served from a frontend server on EC2.
-* **Backend**: App deployed to AWS (EC2). Docker images used for portability.
+* **Frontend**: Static site hosted on AWS CloudFront.
+* **Backend**: App deployed to AWS (EC2) using Flask and Phython.
 * **Database**: PostgreSQL on AWS RDS. 
 
 **Certificates & HTTPS**
 
-* TLS certificates via AWS Certificate Manager (ACM) or direct Let’s Encrypt for EC2.
+* TLS certificates via AWS Certificate Manager (ACM) and HTTPS Certificate via AWS Cloudfront and NameCheap.
 
 **Domain config**
 
-* `foodbankconnect.me` configured in DNS to point to load balancer.
+* `foodbankconnect.me` configured in DNS to direct traffic to CloudFront.
 
 ---
 
-## 11. API Documentation — Example concrete specs
+## 11. Scrapers — Operational notes
 
-**Foodbanks list**
-
-* URL: `https://foodbankconnect.me/api/foodbanks?page=1&per_page=20`
-* Method: `GET`
-* Response: JSON (see schema above)
-
-**Foodbank details**
-
-* URL: `https://foodbankconnect.me/api/foodbanks/123`
-* Method: `GET`
-* Response: `{ data: { id, name, address, lat, lon, media: [...], programs: [...], sponsors: [...] }}`
-
-Include these exact URLs in the Postman collection (already present).
-
----
-
-## 12. Scrapers — Operational notes
-
-* Scrapers live in `fbc-scrapers` repo. Each script is idempotent and can be run on a cron schedule.
+* Scrapers live in `fbc-scrapers` repo.
 * Typical flow:
 
   1. Run scraper -> write canonical JSON.
-  2. Run import script (`fetch_data.py`) to upsert into DB via backend API or direct DB connection.
+  2. Run import script (`fetch_data.py`) to insert into the database.
 
 ---
 
-## 13. Challenges & How We Overcame Them
+## 12. Challenges & How We Overcame Them
 
 **1) Heterogeneous data formats**
 
 * Problem: Different sources used different field names, address formats, and missing fields.
-* Solution: Build canonical schema + normalization layer in scrapers.
+* Solution: Build canonical schema + normalization layer in scrapers based on three example JSON files that represent our current JSON attributes for each model.
 
 **2) Deploying multiple services**
 
@@ -305,10 +290,10 @@ Include these exact URLs in the Postman collection (already present).
 
 ---
 
-## 14. How to Onboard a New Developer
+## 13. How to Onboard a New Developer
 
 1. **Clone the repositories**  
-   Get access to both the frontend (React) and backend  repositories from GitLab.  
+   Get access to both the frontend (React) and backend repositories from GitLab.  
    The links are provided in the main project README.
 
 2. **Set up the database**  
@@ -320,6 +305,7 @@ Include these exact URLs in the Postman collection (already present).
    (e.g., `foodbank_example.json`) to test queries and endpoints.
 
 4. **Run the backend locally**  
+   See BackendInstruction.md in the main repo.
 
 5. **Run the frontend**
     npm install
@@ -330,7 +316,7 @@ Include these exact URLs in the Postman collection (already present).
 
 ---
 
-## 15. Remaining Work & Next Steps (Phase III+)
+## 14. Remaining Work & Next Steps (Phase III+)
 
 * Implement advanced filtering and sorting UI for model pages.
 * Implement Webhooks to notify partners when urgency levels change.
@@ -338,7 +324,7 @@ Include these exact URLs in the Postman collection (already present).
 
 ---
 
-## 16. Useful Links & Repositories
+## 15. Useful Links & Repositories
 
 * Main repo: `https://gitlab.com/OdinLimaye/cs373-fall-2025-55085_07`
 * Scrapers: `https://gitlab.com/dafrancc/fbc-scrapers`
@@ -348,7 +334,7 @@ Include these exact URLs in the Postman collection (already present).
 
 ---
 
-## 17. Appendix
+## 16. Appendix
 
 * **Sample JSON files**: `foodbank_example.json`, `program_example.json`, `sponsor_example.json` (found in repo `src/`)
 * **Scripts**: `fetch_data.py`, `parse_foodbanks_html.py`, `parse_programs_html.py`, `parse_sponsors_html.py` (in `src/`)
