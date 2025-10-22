@@ -1,7 +1,7 @@
 // src/__test__/Navbar.test.js
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import Navbar from '../components/Na'; 
+import Navbar from '../components/Navbar'; 
 
 // Helper function to render component with Router
 const renderWithRouter = (component) => {
