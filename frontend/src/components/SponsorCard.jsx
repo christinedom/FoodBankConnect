@@ -2,35 +2,19 @@ import { useNavigate } from "react-router-dom";
 import styles from "./SponsorCard.module.css";
 
 const SponsorCard = ({
+	id,
 	sponsor_img,
 	sponsor_alt,
 	name,
-	about,
-	contribution,
-	contribution_amt,
-	contribution_unit,
 	affiliation,
-	sponsor_link,
-	past_inv,
-	map_link,
+	city,
+	state,
 }) => {
 	const navigate = useNavigate();
 
 	const handleClick = () => {
-		navigate(`/sponsors/${name}`, {
-			state: {
-				sponsor_img,
-				sponsor_alt,
-				name,
-				about,
-				contribution,
-				contribution_amt,
-				contribution_unit,
-				affiliation,
-				sponsor_link,
-				past_inv,
-				map_link
-			},
+		navigate(`/sponsors/${id}`, {
+			state: { id }, // instance page will fetch full info
 		});
 	};
 
@@ -45,13 +29,11 @@ const SponsorCard = ({
 			<div className={styles["card-body"]}>
 				<h5 className={styles["card-title"]}>{name}</h5>
 				<p className={styles["text"]}>
-					<strong>Contribution:</strong> {contribution}
-					<br />
-					<strong>Amount:</strong> {contribution_amt} {contribution_unit}
+					<strong>Contribution:</strong> Donations / Grants
 					<br />
 					<strong>Affiliation:</strong> {affiliation}
 					<br />
-					<strong>Past Involvement:</strong> {past_inv}
+					<strong>Location:</strong> {city}, {state}
 				</p>
 			</div>
 		</div>

@@ -1,101 +1,97 @@
-import { useLocation, Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import Header from "./Header";
 import Footer from "./Footer";
 import Breadcrumb from "./Breadcrumb";
 import styles from "../styles/Sponsors.module.css";
 
+const BASE_URL = "https://api.foodbankconnect.me/v1/sponsors";
+
 const SponsorInstancePage = () => {
 	const location = useLocation();
-	const {
-		sponsor_img,
-		sponsor_alt,
-		name,
-		about,
-		contribution,
-		contribution_amt,
-		contribution_unit,
-		affiliation,
-		sponsor_link,
-		past_inv,
-		map_link,
-	} = location.state || {};
+	const { id } = location.state || {};
+	const [sponsor, setSponsor] = useState(null);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		const fetchSponsor = async () => {
+			if (!id) {
+				setLoading(false);
+				return;
+			}
+			try {
+				const res = await fetch(`${BASE_URL}/${id}`);
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const data = await res.json();
+				setSponsor(data);
+			} catch (err) {
+				console.error("Error fetching sponsor:", err);
+			} finally {
+				setLoading(false);
+			}
+		};
+		fetchSponsor();
+	}, [id]);
+
+	if (loading) return <div className="container my-5">Loading sponsor details...</div>;
+	if (!sponsor) return <div className="container my-5">Sponsor not found.</div>;
+
 	return (
 		<div id="wrapper">
 			<Navbar />
-			<Header headerText={"Sponsors & Donors - " + name} />
-			<Breadcrumb model_type="sponsors" current_page={name} />
+			<Header headerText={"Sponsors & Donors - " + sponsor.name} />
+			<Breadcrumb model_type="sponsors" current_page={sponsor.name} />
 
-			{/* <!--Main container--> */}
 			<main className="container my-5">
 				<div className={`${styles["sponsor-img-container"]} text-center mb-4`}>
-					<img src={sponsor_img} alt={sponsor_alt} />
+					{sponsor.image && <img src={sponsor.image} alt={sponsor.alt || sponsor.name + " Logo"} />}
 				</div>
+
 				<section className={`mb-4 ${styles.about}`}>
 					<h2>About</h2>
-					<p>{about}</p>
+					<p>{sponsor.about}</p>
 				</section>
+
 				<section className="mb-4">
 					<h2>Details</h2>
 					<ul style={{ listStyle: "none" }}>
-						<li>
-							<p>
-								<strong>Contribution Type:</strong> {contribution}
-							</p>
-						</li>
-						<li>
-							<p>
-								<strong>Contribution Amount:</strong> {contribution_amt}
-							</p>
-						</li>
-						<li>
-							<p>
-								<strong>Contribution Unit:</strong> {contribution_unit}
-							</p>
-						</li>
-						<li>
-							<p>
-								<strong>Affiliation: </strong> {affiliation}
-							</p>
-						</li>
-						<li>
-							{/*Figure out how to link to other instance pages
-							 *May want to send in an array of past involvements and
-							 *loop through array creating various link components to
-							 *other instance pages
-							 *Perhaps list of tuples [(model type : instance of model)]
-							 *e.g. (Sponsor : Trader Joe's)
-							 */}
-							<p>
-								<strong>Past Involvement: </strong>
-								{
-									past_inv
-									// past_inv.map((inv) =>(
-									// 	<Link>{inv}</Link>
-									// ))
-								}
-							</p>
-						</li>
+						<li><strong>Affiliation:</strong> {sponsor.affiliation}</li>
+						<li><strong>Contribution:</strong> {sponsor.contribution}</li>
+						<li><strong>Contribution Amount:</strong> {sponsor.contribution_amt}</li>
+						<li><strong>City:</strong> {sponsor.city}</li>
+						<li><strong>State:</strong> {sponsor.state}</li>
+						<li><strong>Past Involvement:</strong> {sponsor.past_involvement}</li>
 						<li style={{ marginTop: "25px" }}>
-							<strong>Website: </strong>
-							<a href={sponsor_link} target="_blank" rel="noreferrer">
-								{sponsor_link}
+							<strong>Website:</strong>{" "}
+							<a href={sponsor.sponsor_link} target="_blank" rel="noreferrer">
+								{sponsor.sponsor_link}
 							</a>
 						</li>
+						<li><strong>Media / Logo Alt:</strong> {sponsor.alt}</li>
+						<li><strong>EIN:</strong> {sponsor.ein}</li>
+						<li><strong>Created At:</strong> {sponsor.created_at}</li>
+						<li><strong>Fetched At:</strong> {sponsor.fetched_at}</li>
+						<li><strong>Type:</strong> {sponsor.type}</li>
+						<li><strong>ID:</strong> {sponsor.id}</li>
 					</ul>
 				</section>
-				<section className={`${styles["map-container"]} mt-3`}>
-					<iframe
-						style={{ width: "80%", height: "450px" }}
-						src={map_link}
-						allowFullScreen=""
-						loading="lazy"
-						referrerPolicy="no-referrer-when-downgrade"></iframe>
-				</section>
+
+				{sponsor.map_link && (
+					<section className={`${styles["map-container"]} mt-3`}>
+						<iframe
+							style={{ width: "80%", height: "450px" }}
+							src={sponsor.map_link}
+							allowFullScreen=""
+							loading="lazy"
+							referrerPolicy="no-referrer-when-downgrade"></iframe>
+					</section>
+				)}
 			</main>
 
 			<Footer />
 		</div>
 	);
 };
+
 export default SponsorInstancePage;
