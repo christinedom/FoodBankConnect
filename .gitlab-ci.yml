@@ -1,7 +1,7 @@
 stages:
   - build
   - deploy
-  # - selenium
+  - selenium_tests
 
 # Build React pages into static files
 build_react:
@@ -65,5 +65,5 @@ selenium_tests:
     - deploy_website
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-      when: on_success
+      when: never # Change when ready to run tests
     - when: never
