@@ -42,7 +42,8 @@ const Foodbanks = () => {
                 id={bank.id}
                 name={bank.name}
                 city={bank.city}
-                zip={bank.zipcode}
+                zipcode={bank.zipcode}
+                urgency={bank.urgency}
               />
             </div>
           ))}

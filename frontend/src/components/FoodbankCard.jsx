@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
 
-const FoodBankCard = ({ id, name, city, zip }) => {
+const FoodBankCard = ({ id, name, city, zipcode, urgency }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
     navigate(`/foodbanks/${encodeURIComponent(name)}`, {
-      state: { id, name, city, zip },
+      state: { id, name, city, zipcode, urgency },
     });
   };
 
@@ -16,11 +16,11 @@ const FoodBankCard = ({ id, name, city, zip }) => {
       onClick={handleClick}
     >
       <div className="card-body">
-        <h5 className="card-title">{name}</h5>
-        <p className="card-text">
-          <strong>City:</strong> {city || "N/A"} <br />
-          <strong>ZIP Code:</strong> {zip || "N/A"}
-        </p>
+        <p><strong>Name:</strong> {name}</p>
+        <p><strong>City:</strong> {city || "N/A"}</p>
+        <p><strong>ZIP Code:</strong> {zipcode || "N/A"}</p>
+        <p><strong>Urgency:</strong> {urgency || "N/A"}</p>
+        <p><strong>Eligibility:</strong> Everybody</p>
       </div>
     </div>
   );
