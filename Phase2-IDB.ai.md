@@ -36,10 +36,26 @@ AI wasn’t perfect — especially with AWS and some scraping examples. A couple
 # Evidence of Independent Work
 
 ## Paste a before-and-after snippet showing where you changed your own code in response to AI guidance.
+Before:
+def test_card_click(self):
+    self.driver.get("https://foodbankconnect.me/foodbanks")
+    card = self.driver.find_element(By.CLASS_NAME, "card")
+    card.click()
+    self.assertTrue("foodbanks" in self.driver.current_url)
 
+After:
+def test_first_card_clickable(self):
+    self.driver.get(self.base_url)
+    card = self.wait.until(
+        EC.element_to_be_clickable((By.CLASS_NAME, "card"))
+    )
+    initial_url = self.driver.current_url
+    card.click()
+    self.wait.until(lambda d: d.current_url != initial_url)
+    self.assertNotEqual(self.driver.current_url, initial_url, "Clicking card did not navigate")
 
 ## In 2–3 sentences, explain what you learned by making this change.
-
+When we first wrote the test, it only worked sometimes. However, if the page was slow or the cards hadn’t loaded yet, it would fail. After using AI to learn more about how Selenium actually works, we realized we needed to wait for the elements to be clickable, not just present. AI showed us how to use WebDriverWait and expected_conditions, which made our test way more reliable and useful. It also helped us understand how Selenium mimics real users. For example, it waits for stuff to load and makes sure clicks actually go somewhere. Overall, we feel way more confident writing tests now using Selenium.
 
 ---
 
