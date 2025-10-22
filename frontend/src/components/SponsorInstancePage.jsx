@@ -101,11 +101,11 @@ const SponsorInstancePage = () => {
             <li style={{ marginTop: "25px" }}>
               <strong>Website:</strong>{" "}
               <a href={sponsor.sponsor_link} target="_blank" rel="noreferrer">
-                {sponsor.sponsor_link}
+                Official Website
               </a>
             </li>
             <li><strong>Media / Logo Alt:</strong> {sponsor.alt}</li>
-            <li><strong>EIN:</strong> {sponsor.ein}</li>
+            <li><strong>Employee Identification Number:</strong> {sponsor.ein}</li>
           </ul>
         </section>
 
