@@ -1,9 +1,14 @@
 stages:
   - build
+  - backend_test
   - deploy
   - selenium_tests
+  - backend_release
 
-# Build React pages into static files
+
+# ------------------------------
+# Frontend: Build React (unchanged)
+# ------------------------------
 build_react:
   stage: build
   image: node:20-bullseye
@@ -23,12 +28,133 @@ build_react:
       when: on_success
     - when: never
 
-# Deploy to S3 and invalidate CloudFront
+# ------------------------------
+# Backend: Python unit tests (pytest) — non-blocking
+# ------------------------------
+backend_unit_tests:
+  stage: backend_test
+  image: python:3.11
+  allow_failure: true           # <-- ensures frontend still proceeds
+  services:
+    - name: postgres:15
+      alias: postgres
+      command: ["postgres","-c","fsync=off","-c","full_page_writes=off","-c","synchronous_commit=off"]
+  variables:
+    PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    PYTHONDONTWRITEBYTECODE: "1"
+    PYTHONUNBUFFERED: "1"
+    # Flask app env for tests
+    FLASK_ENV: "production"
+    PORT: "8080"
+    DB_HOST: "postgres"
+    DB_PORT: "5432"
+    DB_USER: "postgres"
+    DB_PASSWORD: "postgres"
+    DB_NAME: "postgres"
+    DB_SCHEMA: "app"
+    # Postgres service defaults
+    POSTGRES_DB: postgres
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+  before_script:
+    - python -V
+    - pip install -r requirements.txt
+    - pip install pytest pytest-cov
+    # Wait for Postgres to be ready
+    - for i in {1..30}; do pg_isready -h postgres -p 5432 && break; sleep 1; done || (echo "Postgres not ready" && exit 1)
+  script:
+    - pytest -q --maxfail=1 --disable-warnings --cov=./ --cov-report=xml:coverage.xml --junitxml=pytest-report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: pytest-report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - pytest-report.xml
+      - coverage.xml
+  rules:
+    # Only run when backend/test files change; never block pipeline
+    - changes:
+        - main.py
+        - scraper.py
+        - db-tests/**/* # pytest and postman files
+        - requirements.txt
+      when: on_success
+    - when: never
+
+# ------------------------------
+# Backend: API tests (start Flask + run Postman via Newman) — non-blocking
+# ------------------------------
+backend_api_tests:
+  stage: backend_test
+  image: node:20
+  allow_failure: true           # <-- ensures frontend still proceeds
+  needs: []                     # don't depend on unit tests; keep independent
+  services:
+    - name: postgres:15
+      alias: postgres
+      command: ["postgres","-c","fsync=off","-c","full_page_writes=off","-c","synchronous_commit=off"]
+  variables:
+    FLASK_ENV: "production"
+    PORT: "8080"
+    DB_HOST: "postgres"
+    DB_PORT: "5432"
+    DB_USER: "postgres"
+    DB_PASSWORD: "postgres"
+    DB_NAME: "postgres"
+    DB_SCHEMA: "app"
+    POSTGRES_DB: postgres
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+  before_script:
+    - apt-get update && apt-get install -y python3 python3-pip curl
+    - pip install -r requirements.txt
+    - npm install -g newman
+    # wait for postgres socket to accept connections
+    - for i in {1..30}; do (python3 - <<'PY'
+import socket; s=socket.socket(); s.settimeout(1)
+try:
+  s.connect(('postgres',5432)); print("ok")
+except Exception:
+  pass
+s.close()
+PY
+) && break; sleep 1; done
+  script:
+    # Start Flask app (your main.py) in the background
+    - python3 main.py & echo $! > flask.pid
+    # Wait for health endpoint
+    - for i in {1..60}; do curl -sf http://localhost:8080/health && break; sleep 1; done
+    # Run Postman collection
+    - newman run tests/postman/collection.json --env-var BASE_URL=http://localhost:8080 --reporters cli,junit --reporter-junit-export newman-results.xml
+  after_script:
+    - if [ -f flask.pid ]; then kill $(cat flask.pid) || true; fi
+  artifacts:
+    when: always
+    reports:
+      junit: newman-results.xml
+    paths:
+      - newman-results.xml
+  rules:
+    # Only run when backend/test files change; never block pipeline
+    - changes:
+        - main.py
+        - scraper.py
+        - api-tests/**/* # pytest and postman files
+        - requirements.txt
+      when: on_success
+    - when: never
+
+# ------------------------------
+# Frontend: Deploy to S3 + CloudFront (unchanged)
+# ------------------------------
 deploy_website:
   stage: deploy
   image:
     name: amazon/aws-cli
-    entrypoint: [""] 
+    entrypoint: [""]
   script:
     - aws s3 sync frontend/build/ s3://$S3_BUCKET --delete
     - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DIST_ID --paths "/*"
@@ -41,7 +167,9 @@ deploy_website:
       when: on_success
     - when: never
 
-# Run Selenium tests after deploy
+# ------------------------------
+# Frontend: Selenium tests (kept disabled as in your current file)
+# ------------------------------
 selenium_tests:
   stage: selenium_tests
   image: python:3.12-bullseye
@@ -65,5 +193,103 @@ selenium_tests:
     - deploy_website
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-      when: never # Change when ready to run tests
+      when: never  # Change when ready to run tests
+    - when: never
+# ------------------------------
+# Backend Release: build & push 2 images, update Lambda, start Batch — non-blocking
+# ------------------------------
+backend_release:
+  stage: backend_release
+  image: docker:24.0.7
+  services:
+    - name: docker:24.0.7-dind
+      alias: docker
+      command: ["--tls=false", "--mtu=1460"]
+  allow_failure: true             # <-- never block frontend
+  variables:
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
+    # ----- REQUIRED AWS VARS (set these in GitLab CI variables) -----
+    AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+    AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+    # ECR & IMG TAG
+    ECR_REGISTRY: $ECR_REGISTRY          # e.g. 123456789012.dkr.ecr.us-east-2.amazonaws.com
+    ECR_REPO_API: $ECR_REPO_API          # e.g. fbc-rest-api
+    ECR_REPO_LOADER: $ECR_REPO_LOADER    # e.g. fbc-load-db
+    IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+    # Lambda
+    LAMBDA_FUNCTION_NAME: $LAMBDA_FUNCTION_NAME   # e.g. fbc-rest-api
+    # Batch
+    BATCH_JOB_QUEUE: $BATCH_JOB_QUEUE             # e.g. fbc-queue
+    BATCH_JOB_DEFINITION: $BATCH_JOB_DEFINITION   # e.g. fbc-refill:1
+    BATCH_JOB_NAME: $BATCH_JOB_NAME               # e.g. fbc-refill-${CI_COMMIT_SHORT_SHA}
+    # Local build contexts (adjust paths if your Dockerfiles live elsewhere)
+    API_CONTEXT: "."
+    API_DOCKERFILE: "Dockerfile.api"              # or "Dockerfile" if single file
+    LOADER_CONTEXT: "."
+    LOADER_DOCKERFILE: "Dockerfile.loader"
+  before_script:
+    # Install AWS CLI inside docker:24 image
+    - apk add --no-cache curl python3 py3-pip bash jq
+    - pip install awscli
+    # ECR login
+    - aws --version
+    - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+  script:
+    # --- Build & push Image 1 (API) ---
+    - echo "Building API image..."
+    - docker build -f "$API_DOCKERFILE" -t "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG" "$API_CONTEXT"
+    - docker push "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG"
+    # (Optional) also push 'latest' on main
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        docker tag "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPO_API:latest"
+        docker push "$ECR_REGISTRY/$ECR_REPO_API:latest"
+      fi
+
+    # --- Build & push Image 2 (Loader) ---
+    - echo "Building Loader image..."
+    - docker build -f "$LOADER_DOCKERFILE" -t "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG" "$LOADER_CONTEXT"
+    - docker push "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG"
+    # (Optional) also push 'latest' on main
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        docker tag "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPO_LOADER:latest"
+        docker push "$ECR_REGISTRY/$ECR_REPO_LOADER:latest"
+      fi
+
+    # --- Update Lambda to the new API image ---
+    - echo "Updating Lambda function image..."
+    - aws lambda update-function-code \
+        --function-name "$LAMBDA_FUNCTION_NAME" \
+        --image-uri "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG" \
+        --region "$AWS_DEFAULT_REGION" \
+        | jq -r '.LastUpdateStatus, .StateReason || empty'
+    # (Optional) wait until it's Active (does not fail pipeline if it takes long)
+    - |
+      echo "Waiting for Lambda to be Active (timeout ~2min)..."
+      for i in $(seq 1 24); do
+        STATUS=$(aws lambda get-function-configuration --function-name "$LAMBDA_FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" | jq -r '.State')
+        echo "Lambda state: $STATUS"
+        [ "$STATUS" = "Active" ] && break
+        sleep 5
+      done
+
+    # --- Submit AWS Batch job to refill database ---
+    - echo "Submitting AWS Batch job..."
+    - aws batch submit-job \
+        --job-name "${BATCH_JOB_NAME:-fbc-refill-$CI_COMMIT_SHORT_SHA}" \
+        --job-queue "$BATCH_JOB_QUEUE" \
+        --job-definition "$BATCH_JOB_DEFINITION" \
+        --region "$AWS_DEFAULT_REGION" \
+        --container-overrides "image=$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG,environment=[]" \
+        | tee batch_submit.json
+    - echo "Batch job submitted: $(cat batch_submit.json | jq -r .jobId)"
+  rules:
+    # Run on main (and optionally tags) without blocking anything
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: on_success
+    - if: '$CI_COMMIT_TAG'         # OPTIONAL: run on tags, too
+      when: on_success
     - when: never
