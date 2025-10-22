@@ -175,11 +175,11 @@ backend_release:
     - name: docker:24.0.7-dind
       alias: docker
       command: ["--tls=false","--mtu=1460"]
-  allow_failure: true                 # never block anything
+  allow_failure: true
   variables:
     DOCKER_HOST: "tcp://docker:2375"
     DOCKER_TLS_CERTDIR: ""
-    # AWS (set these in GitLab CI variables)
+    # AWS (set in GitLab CI variables)
     AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
     AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
@@ -192,9 +192,9 @@ backend_release:
     LAMBDA_FUNCTION_NAME: $LAMBDA_FUNCTION_NAME
     # Batch
     BATCH_JOB_QUEUE: $BATCH_JOB_QUEUE
-    BATCH_JOB_DEFINITION: $BATCH_JOB_DEFINITION     # e.g. fbc-refill  (or fbc-refill:2 to pin)
-    BATCH_JOB_NAME: $BATCH_JOB_NAME                 # e.g. fbc-refill-${CI_COMMIT_SHORT_SHA}
-    # Docker build paths (override in CI variables if needed)
+    BATCH_JOB_DEFINITION: $BATCH_JOB_DEFINITION
+    BATCH_JOB_NAME: $BATCH_JOB_NAME
+    # Docker build paths (override if needed)
     API_CONTEXT: "."
     API_DOCKERFILE: "Dockerfile.api"
     LOADER_CONTEXT: "."
@@ -203,58 +203,59 @@ backend_release:
     - apk add --no-cache curl python3 py3-pip bash jq
     - pip install awscli
     - aws --version
-    - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+    - >
+      aws ecr get-login-password --region "$AWS_DEFAULT_REGION" |
+      docker login --username AWS --password-stdin "$ECR_REGISTRY"
   script:
-    # Build & push API image
-    - echo "Building API image…"
-    - docker build -f "$API_DOCKERFILE" -t "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG" "$API_CONTEXT"
-    - docker push "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG"
-    - |
+    - >
+      set -e;
+      echo "Building API image…";
+      docker build -f "$API_DOCKERFILE" -t "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG" "$API_CONTEXT";
+      docker push "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG";
       if [ "$CI_COMMIT_BRANCH" = "main" ]; then
-        docker tag "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPO_API:latest"
-        docker push "$ECR_REGISTRY/$ECR_REPO_API:latest"
+        docker tag "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPO_API:latest";
+        docker push "$ECR_REGISTRY/$ECR_REPO_API:latest";
       fi
-
-    # Build & push Loader image
-    - echo "Building Loader image…"
-    - docker build -f "$LOADER_DOCKERFILE" -t "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG" "$LOADER_CONTEXT"
-    - docker push "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG"
-    - |
+    - >
+      set -e;
+      echo "Building Loader image…";
+      docker build -f "$LOADER_DOCKERFILE" -t "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG" "$LOADER_CONTEXT";
+      docker push "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG";
       if [ "$CI_COMMIT_BRANCH" = "main" ]; then
-        docker tag "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPO_LOADER:latest"
-        docker push "$ECR_REGISTRY/$ECR_REPO_LOADER:latest"
+        docker tag "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPO_LOADER:latest";
+        docker push "$ECR_REGISTRY/$ECR_REPO_LOADER:latest";
       fi
-
-    # Update Lambda to new API image
-    - echo "Updating Lambda function image…"
-    - aws lambda update-function-code \
-        --function-name "$LAMBDA_FUNCTION_NAME" \
-        --image-uri "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG" \
-        --region "$AWS_DEFAULT_REGION" \
-        | jq -r '.LastUpdateStatus, .StateReason // empty'
-
-    # Wait for Lambda to be Active (best-effort; non-fatal)
+    - >
+      set -e;
+      echo "Updating Lambda function image…";
+      aws lambda update-function-code
+      --function-name "$LAMBDA_FUNCTION_NAME"
+      --image-uri "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG"
+      --region "$AWS_DEFAULT_REGION"
+      | jq -r '.LastUpdateStatus, .StateReason // empty'
     - |
+      set -e
       echo "Waiting for Lambda to be Active (~2min max)…"
       for i in {1..24}; do
-        STATUS=$(aws lambda get-function-configuration --function-name "$LAMBDA_FUNCTION_NAME" --region "$AWS_DEFAULT_REGION" | jq -r '.State')
+        STATUS=$(aws lambda get-function-configuration \
+          --function-name "$LAMBDA_FUNCTION_NAME" \
+          --region "$AWS_DEFAULT_REGION" | jq -r '.State')
         echo "Lambda state: $STATUS"
         [ "$STATUS" = "Active" ] && break
         sleep 5
       done
-
-    # Submit AWS Batch job
-    - echo "Submitting AWS Batch job…"
-    - aws batch submit-job \
-        --job-name "${BATCH_JOB_NAME:-fbc-refill-$CI_COMMIT_SHORT_SHA}" \
-        --job-queue "$BATCH_JOB_QUEUE" \
-        --job-definition "$BATCH_JOB_DEFINITION" \
-        --region "$AWS_DEFAULT_REGION" \
-        --container-overrides "image=$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG,environment=[]" \
-        | tee batch_submit.json
-    - echo "Batch job submitted: $(jq -r .jobId batch_submit.json)"
+    - >
+      set -e;
+      echo "Submitting AWS Batch job…";
+      aws batch submit-job
+      --job-name "${BATCH_JOB_NAME:-fbc-refill-$CI_COMMIT_SHORT_SHA}"
+      --job-queue "$BATCH_JOB_QUEUE"
+      --job-definition "$BATCH_JOB_DEFINITION"
+      --region "$AWS_DEFAULT_REGION"
+      --container-overrides "image=$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG,environment=[]"
+      | tee batch_submit.json;
+      echo "Batch job submitted: $(jq -r .jobId batch_submit.json)"
   rules:
-    # Run on main (and optionally tags)
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: on_success
     - if: '$CI_COMMIT_TAG'
