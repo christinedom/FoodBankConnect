@@ -70,6 +70,13 @@ const FoodbankInstancePage = () => {
     });
   };
 
+  const handleSponsorClick = (e) => {
+    e.preventDefault();
+    navigate(`/sponsors/${encodeURIComponent(foodbank.name)}`, {
+      state: { id: foodbank.id, name: foodbank.name },
+    });
+  };
+
   if (loading) {
     return (
       <div className="container my-5">
@@ -110,19 +117,12 @@ const FoodbankInstancePage = () => {
               )}
             </li>
             <li><strong>Phone:</strong> {foodbank.phone || "N/A"}</li>
-            <li><strong>Image:</strong> {foodbank.image || "N/A"}</li>
             <li><strong>Address:</strong> {foodbank.address || "N/A"}</li>
             <li><strong>City:</strong> {foodbank.city || "N/A"}</li>
             <li><strong>State:</strong> {foodbank.state || "N/A"}</li>
             <li><strong>ZIP Code:</strong> {foodbank.zipcode || "N/A"}</li>
-            <li><strong>Urgency:</strong> {foodbank.urgency || "N/A"}</li>
-            <li><strong>Capacity:</strong> {foodbank.capacity || "N/A"}</li>
             <li><strong>Languages:</strong> {foodbank.languages?.join(", ") || "N/A"}</li>
             <li><strong>Services:</strong> {foodbank.services?.join(", ") || "N/A"}</li>
-            <li><strong>Open Hours:</strong> {foodbank.open_hours || "N/A"}</li>
-            <li><strong>Eligibility:</strong> {foodbank.eligibility || "N/A"}</li>
-            <li><strong>Fetched At:</strong> {foodbank.fetched_at || "N/A"}</li>
-            <li><strong>Created At:</strong> {foodbank.created_at || "N/A"}</li>
           </ul>
         </section>
 
@@ -150,6 +150,14 @@ const FoodbankInstancePage = () => {
           ) : (
             <p>No hosted programs found for this food bank.</p>
           )}
+        </section>
+
+        {/* Sponsor Navigation */}
+        <section className="mt-4">
+          <h3>Related Sponsor</h3>
+          <a href="#" onClick={handleSponsorClick}>
+            View Sponsor (ID {foodbank.id})
+          </a>
         </section>
       </main>
 

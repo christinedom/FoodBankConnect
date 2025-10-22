@@ -16,7 +16,6 @@ const ProgramsInstancePage = () => {
   const [loading, setLoading] = useState(true);
   const [hostId, setHostId] = useState(null);
 
-  // Fetch program and host ID immediately on page load
   useEffect(() => {
     const fetchProgramAndHost = async () => {
       if (!id) {
@@ -25,22 +24,20 @@ const ProgramsInstancePage = () => {
       }
 
       try {
-        // Fetch program
         const res = await fetch(`${BASE_URL}/${id}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const programData = await res.json();
         setProgram(programData);
 
-        // Immediately fetch host ID if host exists
         if (programData.host) {
           try {
             const hostRes = await fetch(FOODBANKS_URL);
             if (!hostRes.ok) throw new Error(`HTTP ${hostRes.status}`);
             const hostData = await hostRes.json();
-            const target = (hostData.items || []).find(fb => fb.name === programData.host);
-            if (target) {
-              setHostId(target.id);
-            }
+            const target = (hostData.items || []).find(
+              (fb) => fb.name === programData.host
+            );
+            if (target) setHostId(target.id);
           } catch (err) {
             console.error("Error fetching foodbanks:", err);
           }
@@ -61,8 +58,16 @@ const ProgramsInstancePage = () => {
       alert("Host foodbank not found yet. Please wait a moment.");
       return;
     }
-    // Navigate using React Router with stored host ID and name
-    navigate(`/foodbanks/${encodeURIComponent(program.host)}`, { state: { id: hostId, name: program.host } });
+    navigate(`/foodbanks/${encodeURIComponent(program.host)}`, {
+      state: { id: hostId, name: program.host },
+    });
+  };
+
+  const handleSponsorClick = (e) => {
+    e.preventDefault();
+    navigate(`/sponsors/${encodeURIComponent(program.name)}`, {
+      state: { id: program.id, name: program.name },
+    });
   };
 
   if (loading) return <div className="container my-5">Loading program details...</div>;
@@ -78,7 +83,11 @@ const ProgramsInstancePage = () => {
         <div className="row">
           <div className="col-lg-6 mb-4">
             {program.image ? (
-              <img src={program.image} className="img-fluid rounded shadow" alt={program.name} />
+              <img
+                src={program.image}
+                className="img-fluid rounded shadow"
+                alt={program.name}
+              />
             ) : (
               <div className="text-muted">No image available</div>
             )}
@@ -95,15 +104,26 @@ const ProgramsInstancePage = () => {
               <li>
                 <strong>Host:</strong>{" "}
                 {program.host ? (
-                  <a href="#" onClick={handleHostClick}>{program.host}</a>
-                ) : "N/A"}
+                  <a href="#" onClick={handleHostClick}>
+                    {program.host}
+                  </a>
+                ) : (
+                  "N/A"
+                )}
               </li>
               <li><strong>Details Page:</strong> {program.details_page}</li>
               <li><strong>Sign Up / Learn More:</strong> {program.sign_up_link || "N/A"}</li>
               <li><strong>Links:</strong> {program.links || "N/A"}</li>
               <li><strong>Created At:</strong> {program.created_at}</li>
-              <li><strong>Fetched At:</strong> {program.fetched_at || "N/A"}</li>
             </ul>
+
+            {/* Sponsor link */}
+            <div className="mt-3">
+              <h5>Related Sponsor:</h5>
+              <a href="#" onClick={handleSponsorClick}>
+                View Sponsor (ID {program.id})
+              </a>
+            </div>
           </div>
         </div>
 
