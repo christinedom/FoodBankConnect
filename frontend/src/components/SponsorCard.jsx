@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import styles from "./SponsorCard.module.css";
+import '../styles/CardStyles.css';
 
 const SponsorCard = ({
 	id,
@@ -12,13 +13,13 @@ const SponsorCard = ({
 
 	const handleClick = () => {
 		navigate(`/sponsors/${id}`, {
-			state: { id }, // instance page will fetch full info
+			state: { id },
 		});
 	};
 
 	return (
 		<div
-			className={`card ${styles["sponsor-card"]} h-100 shadow-sm`}
+			className={`card-glass ${styles["sponsor-card"]}`}
 			onClick={handleClick}
 			style={{ cursor: "pointer" }}
 		>
@@ -34,6 +35,7 @@ const SponsorCard = ({
 					<br />
 					<strong>State:</strong> {state}
 				</p>
+				<button className="cta-button">See Details</button>
 			</div>
 		</div>
 	);
