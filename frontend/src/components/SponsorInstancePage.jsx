@@ -84,11 +84,18 @@ const SponsorInstancePage = () => {
 
 			<main className="container my-5">
 				<div className={`${styles["sponsor-img-container"]} text-center mb-4`}>
-					{sponsor.image && (
-						<img
-							src={sponsor.image} // use direct URL
-							alt={sponsor.alt || sponsor.name + " Logo"}
-						/>
+					{sponsor.image ? (
+						<>
+							<img
+								src={sponsor.image} // direct URL
+								alt={sponsor.alt || sponsor.name + " Logo"}
+							/>
+							<p style={{ color: "white", wordBreak: "break-all" }}>
+								{sponsor.image}
+							</p>
+						</>
+					) : (
+						<p>No image found</p>
 					)}
 				</div>
 
