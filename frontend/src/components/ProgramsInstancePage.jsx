@@ -6,6 +6,7 @@ import Footer from "./Footer";
 import Breadcrumb from "./Breadcrumb";
 
 const BASE_URL = "https://api.foodbankconnect.me/v1/programs";
+const FOODBANKS_URL = "https://api.foodbankconnect.me/v1/foodbanks?size=50&start=1";
 
 const ProgramsInstancePage = () => {
   const location = useLocation();
@@ -16,56 +17,43 @@ const ProgramsInstancePage = () => {
 
   useEffect(() => {
     const fetchProgram = async () => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
       try {
-        let programData;
-        if (id) {
-          const res = await fetch(`${BASE_URL}/${id}`);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          programData = await res.json();
-        } else if (location.state?.name) {
-          const res = await fetch(`${BASE_URL}?size=10&start=1`);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const data = await res.json();
-          const target = (data.items || []).find(p => p.name === location.state.name);
-          if (!target) throw new Error("Program not found by name");
-          const res2 = await fetch(`${BASE_URL}/${target.id}`);
-          if (!res2.ok) throw new Error(`HTTP ${res2.status}`);
-          programData = await res2.json();
-        } else {
-          throw new Error("No id or name provided");
-        }
-        setProgram(programData);
+        const res = await fetch(`${BASE_URL}/${id}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setProgram(data);
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching program:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchProgram();
-  }, [id, location.state]);
+  }, [id]);
 
+  // Navigate to the foodbank page by host name
   const handleHostClick = async (hostName) => {
     try {
-      const res = await fetch(`https://api.foodbankconnect.me/v1/foodbanks?size=10&start=1`);
+      const res = await fetch(FOODBANKS_URL);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const target = (data.items || []).find(fb => fb.name === hostName);
       if (target) {
         navigate(`/foodbanks/${encodeURIComponent(target.name)}`, { state: { id: target.id } });
       } else {
-        alert("Foodbank not found: " + hostName);
+        alert(`Foodbank not found: ${hostName}`);
       }
     } catch (err) {
       console.error("Error fetching foodbanks:", err);
     }
   };
 
-  if (loading)
-    return <div className="container my-5">Loading program details...</div>;
-
-  if (!program)
-    return <div className="container my-5">Program not found.</div>;
+  if (loading) return <div className="container my-5">Loading program details...</div>;
+  if (!program) return <div className="container my-5">Program not found.</div>;
 
   return (
     <div className="wrapper">
@@ -94,18 +82,19 @@ const ProgramsInstancePage = () => {
               <li className="list-group-item">
                 <strong>Host:</strong>{" "}
                 {program.host ? (
-                  <a href="#" onClick={(e) => { e.preventDefault(); handleHostClick(program.host); }}>
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleHostClick(program.host);
+                    }}
+                  >
                     {program.host}
                   </a>
                 ) : "N/A"}
               </li>
               <li className="list-group-item"><strong>Details Page:</strong> {program.details_page}</li>
-              <li className="list-group-item">
-                <strong>Sign Up / Learn More:</strong>{" "}
-                {program.sign_up_link ? (
-                  <a href={program.sign_up_link} target="_blank" rel="noreferrer">{program.sign_up_link}</a>
-                ) : "N/A"}
-              </li>
+              <li className="list-group-item"><strong>Sign Up / Learn More:</strong> {program.sign_up_link || "N/A"}</li>
               <li className="list-group-item"><strong>Links:</strong> {program.links || "N/A"}</li>
               <li className="list-group-item"><strong>Created At:</strong> {program.created_at}</li>
               <li className="list-group-item"><strong>Fetched At:</strong> {program.fetched_at || "N/A"}</li>
