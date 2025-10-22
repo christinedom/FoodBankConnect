@@ -4,6 +4,7 @@
   https://gitlab.com/dafrancc/fbc-scrapers
 
 - **Postman:**
+https://www.postman.com/downing-group-7/dafrancc-s-workspace/collection/uhwer5y/food-bank-api-v2
 
 - **Canvas / Slack group number:**  
   55085_07  
@@ -119,13 +120,14 @@ https://foodbankconnect.me
 
 ## Phase Two
 - **Git SHA:**  
-- **Project Leader:**  
+- **Project Leader: Francisco Vivas** 
   - Responsibilities:  
 - **GitLab Pipelines:**
 https://gitlab.com/OdinLimaye/cs373-fall-2025-55085_07/-/pipelines  
 - **Website:**
 https://foodbankconnect.me
 - **Postman:**
+https://www.postman.com/downing-group-7/dafrancc-s-workspace/collection/uhwer5y/food-bank-api-v2
 
 ### Time Tracking
 | Member            | Estimated Hours | Actual Hours |  
@@ -136,7 +138,7 @@ https://foodbankconnect.me
 | Mahika Dawar      | 18              |              |  
 | Jose Lopez        | 20              |              |  
 
-**Comments:**
+**Comments:** None
 
 ---  
 
