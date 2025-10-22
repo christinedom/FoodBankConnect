@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -9,6 +9,7 @@ const BASE_URL = "https://api.foodbankconnect.me/v1/foodbanks";
 
 const FoodbankInstancePage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { id, name } = location.state || {};
 
   const [foodbank, setFoodbank] = useState(null);
@@ -35,6 +36,22 @@ const FoodbankInstancePage = () => {
 
     fetchFoodbankDetails();
   }, [id]);
+
+  const handleServiceClick = async (serviceName) => {
+    try {
+      const res = await fetch(`https://api.foodbankconnect.me/v1/programs?size=10&start=1`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const target = (data.items || []).find(p => p.name === serviceName);
+      if (target) {
+        navigate(`/programs/${encodeURIComponent(target.name)}`, { state: { id: target.id } });
+      } else {
+        alert("Program not found: " + serviceName);
+      }
+    } catch (err) {
+      console.error("Error fetching programs:", err);
+    }
+  };
 
   if (loading) {
     return (
@@ -71,9 +88,7 @@ const FoodbankInstancePage = () => {
             <li><strong>Name:</strong> {foodbank.name || "N/A"}</li>
             <li><strong>About:</strong> {foodbank.about || "N/A"}</li>
             <li><strong>Website:</strong>{" "}
-              {foodbank.website ? (
-                <a href={foodbank.website} target="_blank" rel="noreferrer">{foodbank.website}</a>
-              ) : "N/A"}
+              {foodbank.website ? <a href={foodbank.website} target="_blank" rel="noreferrer">{foodbank.website}</a> : "N/A"}
             </li>
             <li><strong>Phone:</strong> {foodbank.phone || "N/A"}</li>
             <li><strong>Image:</strong> {foodbank.image || "N/A"}</li>
@@ -89,10 +104,7 @@ const FoodbankInstancePage = () => {
               {foodbank.services?.length ? (
                 foodbank.services.map((service, idx) => (
                   <span key={idx}>
-                    <a
-                      href={`/programs/${encodeURIComponent(service)}`}
-                      state={{ id: null }}
-                    >
+                    <a href="#" onClick={(e) => { e.preventDefault(); handleServiceClick(service); }}>
                       {service}
                     </a>
                     {idx < foodbank.services.length - 1 ? ", " : ""}

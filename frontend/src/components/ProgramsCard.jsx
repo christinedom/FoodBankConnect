@@ -7,7 +7,7 @@ const ProgramCard = ({ id, name, program_type, freq, host }) => {
 
   const handleClick = () => {
     navigate(`/programs/${encodeURIComponent(name)}`, {
-      state: { id },
+      state: { id, name },
     });
   };
 

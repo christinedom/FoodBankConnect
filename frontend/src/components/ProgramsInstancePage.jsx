@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import Header from "./Header";
@@ -9,6 +9,7 @@ const BASE_URL = "https://api.foodbankconnect.me/v1/programs";
 
 const ProgramsInstancePage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { id } = location.state || {};
   const [program, setProgram] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,19 +34,27 @@ const ProgramsInstancePage = () => {
     fetchProgram();
   }, [id]);
 
+  const handleHostClick = async (hostName) => {
+    try {
+      const res = await fetch(`https://api.foodbankconnect.me/v1/foodbanks?size=10&start=1`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const target = (data.items || []).find(fb => fb.name === hostName);
+      if (target) {
+        navigate(`/foodbanks/${encodeURIComponent(target.name)}`, { state: { id: target.id } });
+      } else {
+        alert("Foodbank not found: " + hostName);
+      }
+    } catch (err) {
+      console.error("Error fetching foodbanks:", err);
+    }
+  };
+
   if (loading)
-    return (
-      <div className="container my-5">
-        Loading program details...
-      </div>
-    );
+    return <div className="container my-5">Loading program details...</div>;
 
   if (!program)
-    return (
-      <div className="container my-5">
-        Program not found.
-      </div>
-    );
+    return <div className="container my-5">Program not found.</div>;
 
   return (
     <div className="wrapper">
@@ -57,11 +66,7 @@ const ProgramsInstancePage = () => {
         <div className="row">
           <div className="col-lg-6 mb-4">
             {program.image ? (
-              <img
-                src={program.image}
-                className="img-fluid rounded shadow"
-                alt={program.name}
-              />
+              <img src={program.image} className="img-fluid rounded shadow" alt={program.name} />
             ) : (
               <div className="text-muted">No image available</div>
             )}
@@ -73,17 +78,12 @@ const ProgramsInstancePage = () => {
               <li className="list-group-item"><strong>ID:</strong> {program.id}</li>
               <li className="list-group-item"><strong>Type:</strong> {program.program_type}</li>
               <li className="list-group-item"><strong>Frequency:</strong> {program.frequency}</li>
-              <li className="list-group-item">
-                <strong>Eligibility:</strong> {program.eligibility || "Everybody"}
-              </li>
+              <li className="list-group-item"><strong>Eligibility:</strong> {program.eligibility || "Everybody"}</li>
               <li className="list-group-item"><strong>Cost:</strong> {program.cost}</li>
               <li className="list-group-item">
                 <strong>Host:</strong>{" "}
                 {program.host ? (
-                  <a
-                    href={`/foodbanks/${encodeURIComponent(program.host)}`}
-                    state={{ id: null }}
-                  >
+                  <a href="#" onClick={(e) => { e.preventDefault(); handleHostClick(program.host); }}>
                     {program.host}
                   </a>
                 ) : "N/A"}
@@ -92,9 +92,7 @@ const ProgramsInstancePage = () => {
               <li className="list-group-item">
                 <strong>Sign Up / Learn More:</strong>{" "}
                 {program.sign_up_link ? (
-                  <a href={program.sign_up_link} target="_blank" rel="noreferrer">
-                    {program.sign_up_link}
-                  </a>
+                  <a href={program.sign_up_link} target="_blank" rel="noreferrer">{program.sign_up_link}</a>
                 ) : "N/A"}
               </li>
               <li className="list-group-item"><strong>Links:</strong> {program.links || "N/A"}</li>
