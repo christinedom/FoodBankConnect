@@ -6,6 +6,9 @@
 - **Postman:**
 https://www.postman.com/downing-group-7/dafrancc-s-workspace/collection/uhwer5y/food-bank-api-v2
 
+- **Current Rubric:**
+https://docs.google.com/document/d/18aoNGugISszpRDWHiMF9u9QAbScI5wahBJe-YHjtmkc/edit?usp=sharing
+
 - **Canvas / Slack group number:**  
   55085_07  
 
