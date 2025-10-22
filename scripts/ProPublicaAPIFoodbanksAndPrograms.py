@@ -1,28 +1,33 @@
-# Odin wrote this
-
 import requests
 import json
 import time
-import os
 
 BASE_URL = "https://projects.propublica.org/nonprofits/api/v2"
 MAX_RESULTS = 100
 
-def fetch_image(query: str) -> str:
+GOOGLE_API_KEY = "AIzaSyCaX5owOlwzJq59MYdCl6lV5BKt3W3K-KE"
+GOOGLE_CX = "47dcfe213c7274b68"
+
+def fetch_google(query: str, search_type: str = None):
+    """Fetch first result (image or link) from Google Custom Search."""
+    params = {
+        "q": query,
+        "cx": GOOGLE_CX,
+        "key": GOOGLE_API_KEY,
+        "num": 1
+    }
+    if search_type == "image":
+        params["searchType"] = "image"
+
     try:
-        encoded_query = requests.utils.quote(query)
-        url = (
-            f"https://www.googleapis.com/customsearch/v1?"
-            f"q={encoded_query}&cx=47dcfe213c7274b68&key=AIzaSyCaX5owOlwzJq59MYdCl6lV5BKt3W3K-KE"
-            f"&searchType=image&num=1"
-        )
-        resp = requests.get(url)
+        resp = requests.get("https://www.googleapis.com/customsearch/v1", params=params)
         resp.raise_for_status()
         data = resp.json()
-        if data.get("items") and len(data["items"]) > 0:
+        if "items" in data and len(data["items"]) > 0:
             return data["items"][0]["link"]
     except Exception as e:
-        print(f"Error fetching image for '{query}': {e}")
+        print(f"Error fetching Google result for '{query}': {e}")
+    # Default if no result
     return "N/A"
 
 def fetch_search(q="food bank", state=None, page=0):
@@ -93,7 +98,6 @@ def scrape(q="food bank", state=None, max_results=MAX_RESULTS):
             name = org.get("name", "N/A")
             city = org.get("city", "N/A")
             state_code = org.get("state", "N/A")
-            website = f"https://projects.propublica.org/nonprofits/organizations/{ein}" if ein else "N/A"
 
             detail = fetch_organization(ein)
             if detail and "organization" in detail:
@@ -108,17 +112,16 @@ def scrape(q="food bank", state=None, max_results=MAX_RESULTS):
 
             services_list = infer_services(about)
 
-            # Foodbank image
-            foodbank_image = fetch_image(name + " logo")
-            time.sleep(0.2)
+            # ✅ Images
+            foodbank_image = fetch_google(name + " logo", search_type="image")
+            program_image = fetch_google(name + " volunteer", search_type="image")
 
-            # Build a unique program name using the foodbank name
-            program_name = f"{name} {' / '.join(services_list)} Program"
-            # Program image (search foodbank name + "volunteer")
-            program_image = fetch_image(name + " volunteer")
-            time.sleep(0.2)
+            # ✅ Website links
+            foodbank_website = fetch_google(name + " official site")
+            program_signup = fetch_google(name + " volunteer")
 
             # Foodbank JSON
+            program_name = f"{name} {' / '.join(services_list)} Program"
             foodbank_json = {
                 "about": about,
                 "capacity": "N/A",
@@ -132,7 +135,7 @@ def scrape(q="food bank", state=None, max_results=MAX_RESULTS):
                 "services": [program_name],
                 "type": "foodbank",
                 "urgency": "High",
-                "website": website,
+                "website": foodbank_website,
                 "zipcode": zipcode
             }
 
@@ -146,15 +149,13 @@ def scrape(q="food bank", state=None, max_results=MAX_RESULTS):
                 "host": name,
                 "detailsPage": program_name.replace(" ", "-").lower(),
                 "about": about,
-                "sign_up_link": website,
+                "sign_up_link": program_signup,
                 "type": "program",
                 "image": program_image
             }
 
             results.append(foodbank_json)
             results.append(program_json)
-
-            time.sleep(0.2)
 
         page += 1
         if page >= search_json.get("num_pages", 0):
@@ -164,6 +165,3 @@ def scrape(q="food bank", state=None, max_results=MAX_RESULTS):
 
 if __name__ == "__main__":
     data = scrape(q="food bank", state=None, max_results=MAX_RESULTS)
-    with open("foodbanks_programs.json", "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"✅ Scraped {len(data)//2} food banks and programs successfully.")

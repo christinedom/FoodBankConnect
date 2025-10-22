@@ -1,6 +1,7 @@
 import requests
 import json
 import time
+import re
 
 BASE_URL = "https://projects.propublica.org/nonprofits/api/v2"
 MAX_RESULTS = 100
@@ -25,8 +26,8 @@ FOOD_RELATED_KEYWORDS = [
     "food insecurity"
 ]
 
-GOOGLE_API_KEY = "YOUR_GOOGLE_API_KEY"
-GOOGLE_CX = "YOUR_GOOGLE_CX"
+GOOGLE_API_KEY = "AIzaSyCaX5owOlwzJq59MYdCl6lV5BKt3W3K-KE"
+GOOGLE_CX = "47dcfe213c7274b68"
 
 def classify_affiliation(name: str, org_detail: dict = None) -> str:
     corp_terms = ["INC", "LLC", "CORP", "COMPANY", "CO.", "LTD", "CORPORATION"]
@@ -56,22 +57,44 @@ def fetch_grants(ein: str) -> str:
         return grants[0].get("recipient_name", "N/A")
     return "N/A"
 
-def fetch_image(name: str) -> str:
-    """Fetch an image URL from Google Custom Search."""
+def fetch_logo(name: str) -> str:
+    """Fetch first image URL from Google Custom Search for sponsor logo."""
     if not name:
         return "N/A"
+
     query = f"{name} logo"
-    url = f"https://www.googleapis.com/customsearch/v1?q={query}&cx=47dcfe213c7274b68&key=AIzaSyCaX5owOlwzJq59MYdCl6lV5BKt3W3K-KE&searchType=image&num=1"
+    url = (
+        f"https://www.googleapis.com/customsearch/v1?q={query}"
+        f"&cx={GOOGLE_CX}&key={GOOGLE_API_KEY}&searchType=image&num=1"
+    )
     try:
         resp = requests.get(url)
-        if resp.status_code != 200:
-            return "N/A"
+        resp.raise_for_status()
         data = resp.json()
-        if data.get("items"):
+        if "items" in data and len(data["items"]) > 0:
             return data["items"][0]["link"]
     except Exception as e:
-        print("Error fetching image:", e)
+        print(f"Error fetching logo for '{name}': {e}")
     return "N/A"
+
+def fetch_tax_exempt_date(ein: str) -> str:
+    """Return 'Tax-exempt since YYYY' from ProPublica EIN page."""
+    if not ein:
+        return "This is a nonprofit, tax exempt."
+    url = f"https://projects.propublica.org/nonprofits/organizations/{ein}"
+    try:
+        resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+        if resp.status_code != 200:
+            return "This is a nonprofit, tax exempt."
+        text = resp.text
+        match = re.search(r"Tax-exempt since ([A-Za-z0-9 ,]+)", text)
+        if match:
+            tax_str = match.group(1)
+            if re.search(r"\b\d{4}\b", tax_str):
+                return f"Tax-exempt since {tax_str}"
+        return "This is a nonprofit, tax exempt."
+    except:
+        return "This is a nonprofit, tax exempt."
 
 def scrape(max_results=MAX_RESULTS):
     all_results = []
@@ -104,18 +127,19 @@ def scrape(max_results=MAX_RESULTS):
                         detail_json = detail_resp.json()
                         detail = detail_json.get("organization")
 
-                about = detail.get("mission") if detail else "N/A"
+                # ✅ Change here: use Tax-exempt since ... for about
+                about = fetch_tax_exempt_date(ein)
+
                 affiliation = classify_affiliation(name, detail)
                 past_involvement = fetch_grants(ein) if ein else "N/A"
                 sponsor_link = f"https://projects.propublica.org/nonprofits/organizations/{ein}" if ein else "N/A"
 
-                # ✅ Fetch image
-                image_url = fetch_image(name)
-                time.sleep(0.2)  # polite delay
+                # ✅ Fetch logo from Google (no caching)
+                logo_url = fetch_logo(name)
 
                 donor_json = {
                     "name": name,
-                    "image": image_url,
+                    "image": logo_url,
                     "alt": f"{name} Logo",
                     "contribution": "Donations / Grants",
                     "contributionAmt": "N/A",
@@ -144,6 +168,3 @@ def scrape(max_results=MAX_RESULTS):
 
 if __name__ == "__main__":
     donors = scrape()
-    with open("donors.json", "w", encoding="utf-8") as f:
-        json.dump(donors, f, indent=4, ensure_ascii=False)
-    print(f"✅ Saved {len(donors)} sponsors to donors.json")
