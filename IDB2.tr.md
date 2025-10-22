@@ -31,7 +31,7 @@ Primary public surfaces:
 3. **API layer (Backend)**
 
    * Backend is a Python REST service. Endpoints implemented to serve model collections and individual instances.
-   * We used AWS to host our site on its CloudFront platform, using its S3 bucket structure.
+   * We used AWS to host our site. 
 
 4. **Frontend (Client)**
 
@@ -244,17 +244,17 @@ This project’s Phase II required database integration, API endpoints, paginati
 
 **Hosting choices**
 
-* **Frontend**: Static site hosted on AWS S3 + CloudFront or served from a frontend server on EC2.
+* **Frontend**: Static site hosted on AWS or served from a frontend server on EC2.
 * **Backend**: App deployed to AWS (EC2). Docker images used for portability.
 * **Database**: PostgreSQL on AWS RDS. 
 
 **Certificates & HTTPS**
 
-* TLS certificates via AWS Certificate Manager (ACM) + CloudFront or direct Let’s Encrypt for EC2.
+* TLS certificates via AWS Certificate Manager (ACM) or direct Let’s Encrypt for EC2.
 
 **Domain config**
 
-* `foodbankconnect.me` configured in DNS to point to CloudFront / load balancer.
+* `foodbankconnect.me` configured in DNS to point to load balancer.
 
 ---
 
@@ -353,13 +353,13 @@ Include these exact URLs in the Postman collection (already present).
 
 ### Hosting & domain (clarifications)
 
-* Frontend hosting: Static assets served via **AWS S3 + CloudFront**. 
+* Frontend hosting: Static assets served via **AWS**. 
 * SSL/TLS: Certificates obtained via **AWS Certificate Manager**; domain management and redirects set up in **Namecheap** to force HTTPS and canonical `foodbankconnect.me`.
 
 ### Tools used (expanded)
 
 * GitLab (repo and CI)
-* AWS (S3, CloudFront, EC2, Aurora RDS, ACM; optional Lambda / API Gateway)
+* AWS (EC2; optional Lambda / API Gateway)
 * Namecheap (domain management & redirects)
 * React + Bootstrap (frontend)
 * Python scrapers: `requests`, `BeautifulSoup`, Google Cloud Programmable Search API
