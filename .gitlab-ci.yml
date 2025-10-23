@@ -9,8 +9,8 @@ stages:
 # GLOBAL ENVIRONMENT VARIABLES
 # ------------------------------------------------
 variables:
-  REQUIREMENTS_FILE: "backend/requirements.txt"
-  PYTEST_WORKDIR: "backend"
+  REQUIREMENTS_FILE_UNIT: "fbc-load-db/requirements.txt"
+  REQUIREMENTS_FILE_API: "fbc-rest-api/requirements.txt"
   REPORT_DIR: "reports"
   PYTEST_JUNIT_XML: "$REPORT_DIR/pytest-report.xml"
   PYTEST_COVERAGE_XML: "$REPORT_DIR/coverage.xml"
@@ -87,13 +87,14 @@ backend_unit_tests:
   image: python:3.12-bullseye
   before_script:
     - python -V
-    - pip install -r "$REQUIREMENTS_FILE"
+    - pip install -r "$REQUIREMENTS_FILE_UNIT"
     - pip install pytest pytest-cov
     - mkdir -p "$CI_PROJECT_DIR/$REPORT_DIR"
   script:
-    - |
-      if [ -n "$PYTEST_WORKDIR" ]; then cd "$PYTEST_WORKDIR"; fi
-      pytest -q --maxfail=1 --disable-warnings         --cov=.         --cov-report=xml:"$CI_PROJECT_DIR/$PYTEST_COVERAGE_XML"         --junitxml "$CI_PROJECT_DIR/$PYTEST_JUNIT_XML"
+    - pytest -q --maxfail=1 --disable-warnings \
+        --cov=. \
+        --cov-report=xml:"$CI_PROJECT_DIR/$PYTEST_COVERAGE_XML" \
+        --junitxml "$CI_PROJECT_DIR/$PYTEST_JUNIT_XML"
   artifacts:
     when: always
     reports:
@@ -104,8 +105,6 @@ backend_unit_tests:
     paths:
       - $PYTEST_JUNIT_XML
       - $PYTEST_COVERAGE_XML
-  rules:
-    - when: on_success
 
 # ------------------------------------------------
 # Backend: API tests with Newman/Postman
@@ -114,14 +113,16 @@ backend_api_tests:
   stage: backend_test
   image: node:20-bullseye
   before_script:
-    - apt-get update && apt-get install -y curl python3 python3-pip
-    - pip install -r "$REQUIREMENTS_FILE"
+    - apt-get update && apt-get install -y python3 python3-pip curl
+    - pip install -r "$REQUIREMENTS_FILE_API"
     - npm install -g newman
     - mkdir -p "$CI_PROJECT_DIR/$REPORT_DIR"
   script:
     - if [ -f main.py ]; then python3 main.py & echo $! > flask.pid; fi
     - for i in {1..60}; do curl -sf http://localhost:8080/health && break; sleep 1; done || true
-    - newman run "$POSTMAN_COLLECTION"         --reporters cli,junit         --reporter-junit-export "$CI_PROJECT_DIR/$NEWMAN_JUNIT_XML" || NEWMAN_RC=$?
+    - newman run "$POSTMAN_COLLECTION" \
+        --reporters cli,junit \
+        --reporter-junit-export "$CI_PROJECT_DIR/$NEWMAN_JUNIT_XML" || NEWMAN_RC=$?
     - if [ -f flask.pid ]; then kill $(cat flask.pid) || true; fi
     - if [ ! -s "$CI_PROJECT_DIR/$NEWMAN_JUNIT_XML" ]; then echo "<testsuite></testsuite>" > "$CI_PROJECT_DIR/$NEWMAN_JUNIT_XML"; fi
     - exit ${NEWMAN_RC:-0}
@@ -131,5 +132,3 @@ backend_api_tests:
       junit: $NEWMAN_JUNIT_XML
     paths:
       - $NEWMAN_JUNIT_XML
-  rules:
-    - when: on_success
