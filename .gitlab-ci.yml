@@ -10,12 +10,21 @@ stages:
 # ------------------------------------------------
 variables:
   REQUIREMENTS_FILE_UNIT: "fbc-load-db/requirements.txt"
-  REQUIREMENTS_FILE_API: "fbc-rest-api/requirements.txt"
+  REQUIREMENTS_FILE_API:  "fbc-rest-api/requirements.txt"
+
+  PYTEST_WORKDIR: "fbc-load-db"
+  PYTEST_TESTPATH: "fbc-load-db/tests"
+  PYTEST_IGNORE: "frontend/src/selenium_tests"
+
   REPORT_DIR: "reports"
   PYTEST_JUNIT_XML: "$REPORT_DIR/pytest-report.xml"
   PYTEST_COVERAGE_XML: "$REPORT_DIR/coverage.xml"
+
   POSTMAN_COLLECTION: "tests/postman/collection.json"
   NEWMAN_JUNIT_XML: "$REPORT_DIR/newman-results.xml"
+
+  API_APP_ENTRY: "fbc-rest-api/main.py"
+  API_HEALTH_URL: "http://localhost:8080/health"
 
 # ------------------------------------------------
 # Frontend build and deploy remain the same
@@ -37,11 +46,11 @@ build_react:
 
     # Build only if relevant files changed
     - changes:
-        - frontend/**/*           # your app code
-        - frontend/.env*          # env templates if you use them
-        - package.json            # if at repo root
+        - frontend/**/*  
+        - frontend/.env*      
+        - package.json         
         - package-lock.json
-        - frontend/package.json   # if package.json lives under frontend/
+        - frontend/package.json  
         - frontend/package-lock.json
       when: on_success
 
@@ -92,11 +101,13 @@ backend_unit_tests:
     - mkdir -p "$CI_PROJECT_DIR/$REPORT_DIR"
   script:
     - |
+      if [ -n "$PYTEST_WORKDIR" ]; then cd "$PYTEST_WORKDIR"; fi
       pytest -q --maxfail=1 --disable-warnings \
         --cov=. \
+        --ignore="$CI_PROJECT_DIR/$PYTEST_IGNORE" \
+        "$CI_PROJECT_DIR/$PYTEST_TESTPATH" \
         --cov-report=xml:"$CI_PROJECT_DIR/$PYTEST_COVERAGE_XML" \
         --junitxml "$CI_PROJECT_DIR/$PYTEST_JUNIT_XML"
-
   artifacts:
     when: always
     reports:
@@ -107,6 +118,12 @@ backend_unit_tests:
     paths:
       - $PYTEST_JUNIT_XML
       - $PYTEST_COVERAGE_XML
+  rules:
+    - changes:
+        - fbc-load-db/**/*
+      when: on_success
+    - when: never
+
 
 # ------------------------------------------------
 # Backend: API tests with Newman/Postman
@@ -120,12 +137,20 @@ backend_api_tests:
     - npm install -g newman
     - mkdir -p "$CI_PROJECT_DIR/$REPORT_DIR"
   script:
-    - if [ -f main.py ]; then python3 main.py & echo $! > flask.pid; fi
-    - for i in {1..60}; do curl -sf http://localhost:8080/health && break; sleep 1; done || true
+    # Start your API app if it exists
+    - |
+      if [ -f "$API_APP_ENTRY" ]; then
+        python3 "$API_APP_ENTRY" & echo $! > flask.pid
+        for i in {1..60}; do curl -sf "$API_HEALTH_URL" && break; sleep 1; done || true
+      fi
+
+    # Run collection and always write the JUnit file where artifacts expect it
     - newman run "$POSTMAN_COLLECTION" \
         --reporters cli,junit \
         --reporter-junit-export "$CI_PROJECT_DIR/$NEWMAN_JUNIT_XML" || NEWMAN_RC=$?
-    - if [ -f flask.pid ]; then kill $(cat flask.pid) || true; fi
+
+    # Cleanup and ensure artifact exists
+    - if [ -f flask.pid ]; then kill "$(cat flask.pid)" || true; fi
     - if [ ! -s "$CI_PROJECT_DIR/$NEWMAN_JUNIT_XML" ]; then echo "<testsuite></testsuite>" > "$CI_PROJECT_DIR/$NEWMAN_JUNIT_XML"; fi
     - exit ${NEWMAN_RC:-0}
   artifacts:
@@ -134,3 +159,49 @@ backend_api_tests:
       junit: $NEWMAN_JUNIT_XML
     paths:
       - $NEWMAN_JUNIT_XML
+  rules:
+    - changes:
+        - fbc-rest-api/**/*
+        - tests/postman/**/*
+      when: on_success
+    - when: never
+
+
+
+# ------------------------------------------------
+# Frontend tests: Tests with selenium
+# ------------------------------------------------
+selenium_tests:
+  stage: selenium_tests
+  image: python:3.12-bullseye
+  before_script:
+    - apt-get update && apt-get install -y wget unzip xvfb libxi6 libgconf-2-4 gnupg
+    # Install Google Chrome
+    - wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add -
+    - echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+    - apt-get update && apt-get install -y google-chrome-stable
+    # Match ChromeDriver to Chrome major version
+    - CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+')
+    - wget -q "https://chromedriver.storage.googleapis.com/$CHROME_VERSION/chromedriver_linux64.zip"
+    - unzip chromedriver_linux64.zip
+    - mv chromedriver /usr/local/bin/
+    - chmod +x /usr/local/bin/chromedriver
+    # Python deps for Selenium tests
+    - pip install -r "frontend/tests/requirements.txt"
+    - pip install pytest
+  script:
+    - cd frontend/src/selenium_tests
+    - python -m pytest -q --maxfail=1 --disable-warnings \
+        --junitxml "$CI_PROJECT_DIR/reports/selenium-junit.xml"
+  artifacts:
+    when: always
+    reports:
+      junit: reports/selenium-junit.xml
+    paths:
+      - reports/selenium-junit.xml
+  rules:
+    - changes:
+        - frontend/src/selenium_tests/**/*
+        - frontend/tests/requirements.txt
+      when: on_success
+    - when: never
