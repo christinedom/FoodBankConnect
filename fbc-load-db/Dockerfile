@@ -1,30 +1,31 @@
-# syntax=docker/dockerfile:1
-FROM python:3.12-slim
+# Dockerfile.loader
+FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+# System deps used by entrypoint to fetch scrapers
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git ca-certificates curl bash tar && \
+    rm -rf /var/lib/apt/lists/*
 
+# App files (bake these in!)
 WORKDIR /app
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Minimal tools to fetch just the scrapers/ directory at runtime
-RUN apt-get update \
- && apt-get install -y --no-install-recommends git ca-certificates curl tar bash coreutils \
- && update-ca-certificates \
- && rm -rf /var/lib/apt/lists/*
+# Copy your orchestrator + helper
+COPY main.py scraper.py /app/
 
-# (Optional) install deps for your app here
-# COPY requirements.txt ./
-# RUN pip install --no-cache-dir -r requirements.txt
-# COPY . .
+# Copy the startup script and make it executable
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# Fixed defaults to the user's repo + path as requested
-ENV BIG_REPO_URL="https://gitlab.com/OdinLimaye/cs373-fall-2025-55085_07.git" \
+# Where the scrapers will be placed at runtime
+ENV SCRAPERS_DIR=/app/scrapers \
+    BIG_REPO_URL="https://gitlab.com/OdinLimaye/cs373-fall-2025-55085_07.git" \
     SCRAPERS_PATH="scrapers" \
     SCRAPERS_REF="main" \
-    SCRAPERS_DIR="/app/scrapers" \
-    FETCH_METHOD="archive"
+    FETCH_METHOD="sparse"
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# Start-up: fetch scrapers then exec your app (entrypoint handles this)
+ENTRYPOINT ["/entrypoint.sh"]
+# Fallback cmd if you want to override
+CMD ["python", "/app/main.py"]
