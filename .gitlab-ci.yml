@@ -200,11 +200,30 @@ backend_unit_tests:
     - mkdir -p "$CI_PROJECT_DIR/$REPORT_DIR"
   script:
     - |
-      if [ -n "$PYTEST_WORKDIR" ]; then cd "$PYTEST_WORKDIR"; fi
+      echo "CI_PROJECT_DIR: $CI_PROJECT_DIR"
+      echo "PYTEST_WORKDIR: $PYTEST_WORKDIR"
+      # Show tree so we know where tests actually are
+      ls -la "$CI_PROJECT_DIR"
+      if [ -n "$PYTEST_WORKDIR" ]; then
+        cd "$PYTEST_WORKDIR"
+        echo "Now in: $(pwd)"
+        # list likely test locations
+        ls -la
+        find . -maxdepth 3 -type d \( -name "tests" -o -name "*test*" \) -print || true
+      fi
+
+      # If there is a local 'tests' dir, use it; otherwise let pytest auto-discover
+      if [ -d "tests" ]; then
+        TEST_TARGET="tests"
+      else
+        TEST_TARGET="."
+      fi
+
+      # Run pytest without a hard-coded absolute test path (avoids bad/masked paths)
       pytest -q --maxfail=1 --disable-warnings \
         --cov=. \
         --ignore="$CI_PROJECT_DIR/$PYTEST_IGNORE" \
-        "$CI_PROJECT_DIR/$PYTEST_TESTPATH" \
+        "$TEST_TARGET" \
         --cov-report=xml:"$CI_PROJECT_DIR/$PYTEST_COVERAGE_XML" \
         --junitxml "$CI_PROJECT_DIR/$PYTEST_JUNIT_XML"
   artifacts:
