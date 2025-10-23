@@ -4,7 +4,7 @@ import Navbar from "./Navbar";
 import Header from "./Header";
 import Footer from "./Footer";
 import Breadcrumb from "./Breadcrumb";
-import programsData from "../../programs.json";
+import programsData from "../data/programs.json";
 
 const BASE_URL = "https://api.foodbankconnect.me/v1/programs";
 const FOODBANKS_URL = "https://api.foodbankconnect.me/v1/foodbanks?size=100&start=1";

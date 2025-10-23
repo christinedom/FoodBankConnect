@@ -7,7 +7,7 @@ import Breadcrumb from "./Breadcrumb";
 import styles from "../styles/Sponsors.module.css";
 
 // Paths to scraper JSON files
-import sponsorsData from "../../sponsors.json";
+import sponsorsData from "../data/sponsors.json";
 
 const SponsorInstancePage = () => {
   const location = useLocation();

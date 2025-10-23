@@ -6,7 +6,7 @@ import Footer from "./Footer";
 import Breadcrumb from "./Breadcrumb";
 
 // Import local JSON from scraper
-import foodbanksData from "../../foodbanks.json";
+import foodbanksData from "../data/foodbanks.json";
 
 const FOODBANKS_URL = "https://api.foodbankconnect.me/v1/foodbanks";
 const PROGRAMS_URL = "https://api.foodbankconnect.me/v1/programs?size=100&start=1";
