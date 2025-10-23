@@ -4,6 +4,7 @@ stages:
   - backend_release 
   - backend_test    
   - selenium_tests
+  - jest_tests
 
 # ------------------------------------------------
 # GLOBAL ENVIRONMENT VARIABLES
@@ -304,5 +305,26 @@ selenium_tests:
     - changes:
         - frontend/src/selenium_tests/**/*
         - frontend/tests/requirements.txt
+      when: on_success
+    - when: never
+
+
+
+# ------------------------------------------------
+# Frontend tests: Tests with Jest
+# ------------------------------------------------
+jest_tests:
+  stage: jest_tests
+  image: node:20-bullseye
+  before_script:
+    - cd frontend
+  script:
+    - npm ci
+    - npm test -- --watchAll=false
+  rules:
+    - changes:
+        - frontend/src/__tests__/**/*
+        - frontend/package.json
+        - frontend/package-lock.json
       when: on_success
     - when: never
