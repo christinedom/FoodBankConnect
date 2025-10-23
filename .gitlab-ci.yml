@@ -31,24 +31,53 @@ build_react:
     paths:
       - frontend/build
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    # Allow override via variable in the UI or API
+    - if: '$FORCE_FRONTEND == "1"'
       when: on_success
+
+    # Build only if relevant files changed
+    - changes:
+        - frontend/**/*           # your app code
+        - frontend/.env*          # env templates if you use them
+        - package.json            # if at repo root
+        - package-lock.json
+        - frontend/package.json   # if package.json lives under frontend/
+        - frontend/package-lock.json
+      when: on_success
+
+    # Default: skip
     - when: never
+
 
 deploy_website:
   stage: deploy
   image:
     name: amazon/aws-cli
     entrypoint: [""]
+  dependencies:
+    - build_react
   script:
     - aws s3 sync frontend/build/ s3://$S3_BUCKET --delete
     - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DIST_ID --paths "/*"
-  dependencies:
-    - build_react
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    # Allow manual forcing
+    - if: '$FORCE_FRONTEND == "1" && $CI_COMMIT_BRANCH == "main"'
       when: on_success
+
+    # Deploy only on main when frontend changed (i.e., build ran)
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - frontend/**/*
+        - frontend/.env*
+        - package.json
+        - package-lock.json
+        - frontend/package.json
+        - frontend/package-lock.json
+      when: on_success
+
+    # Default: skip
     - when: never
+
 
 # ------------------------------------------------
 # Backend: Unit tests with pytest
