@@ -1,8 +1,8 @@
 stages:
   - build
-  - deploy              # Frontend deploy runs before any backend work
-  - backend_test        # Non-blocking tests run AFTER deploy
-  - backend_release     # Non-blocking release runs AFTER deploy
+  - deploy         
+  - backend_test    
+  - backend_release 
   - selenium_tests
 
 # ------------------------------
@@ -47,6 +47,7 @@ deploy_website:
 backend_unit_tests:
   stage: backend_test
   image: python:3.11
+  needs: ["backend_deploy"]
   allow_failure: true                   # never block anything
   services:
     - name: postgres:15
@@ -101,7 +102,7 @@ backend_api_tests:
   stage: backend_test
   image: node:20
   allow_failure: true                   # never block anything
-  needs: []                             # keep independent
+  needs: ["backend_deploy"]
   services:
     - name: postgres:15
       alias: postgres
@@ -171,6 +172,7 @@ backend_api_tests:
 backend_release:
   stage: backend_release
   image: docker:24.0.7
+  needs: []
   services:
     - name: docker:24.0.7-dind
       alias: docker
