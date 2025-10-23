@@ -1,0 +1,108 @@
+{
+  "info": {
+    "name": "FBC API (Smoke)",
+    "_postman_id": "fbc-api-smoke",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "One request per endpoint as defined in the API Gateway (v1 base path)."
+  },
+  "variable": [
+    { "key": "BASE_URL", "value": "{{BASE_URL}}" }
+  ],
+  "item": [
+    {
+      "name": "GET /v1/foodbanks",
+      "request": { "method": "GET", "url": "{{BASE_URL}}/v1/foodbanks" },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "exec": [
+            "pm.test('200 OK', () => pm.response.code === 200);",
+            "pm.test('array body', () => Array.isArray(pm.response.json()));"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "GET /v1/programs",
+      "request": { "method": "GET", "url": "{{BASE_URL}}/v1/programs" },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "exec": [
+            "pm.test('200 OK', () => pm.response.code === 200);",
+            "pm.test('array body', () => Array.isArray(pm.response.json()));"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "GET /v1/sponsors",
+      "request": { "method": "GET", "url": "{{BASE_URL}}/v1/sponsors" },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "exec": [
+            "pm.test('200 OK', () => pm.response.code === 200);",
+            "pm.test('array body', () => Array.isArray(pm.response.json()));"
+          ]
+        }
+      }]
+    },
+
+    {
+      "name": "GET /v1/foodbanks/{id}",
+      "event": [{
+        "listen": "prerequest",
+        "script": { "exec": [
+          "// Optionally set a known id here if your data has one",
+          "pm.variables.set('FB_ID', pm.environment.get('FB_ID') || 'fb_ut');"
+        ]}
+      },{
+        "listen": "test",
+        "script": { "exec": [
+          "pm.test('200 or 404', () => [200,404].includes(pm.response.code));",
+          "if (pm.response.code === 200) {",
+          "  const j = pm.response.json(); pm.test('has id', () => j.id);",
+          "}"
+        ]}
+      }],
+      "request": { "method": "GET", "url": "{{BASE_URL}}/v1/foodbanks/{{FB_ID}}" }
+    },
+    {
+      "name": "GET /v1/programs/{id}",
+      "event": [{
+        "listen": "prerequest",
+        "script": { "exec": [
+          "pm.variables.set('PR_ID', pm.environment.get('PR_ID') || 'pr_ut');"
+        ]}
+      },{
+        "listen": "test",
+        "script": { "exec": [
+          "pm.test('200 or 404', () => [200,404].includes(pm.response.code));",
+          "if (pm.response.code === 200) {",
+          "  const j = pm.response.json(); pm.test('has id', () => j.id);",
+          "}"
+        ]}
+      }],
+      "request": { "method": "GET", "url": "{{BASE_URL}}/v1/programs/{{PR_ID}}" }
+    },
+    {
+      "name": "GET /v1/sponsors/{id}",
+      "event": [{
+        "listen": "prerequest",
+        "script": { "exec": [
+          "pm.variables.set('SP_ID', pm.environment.get('SP_ID') || 'sp_ut');"
+        ]}
+      },{
+        "listen": "test",
+        "script": { "exec": [
+          "pm.test('200 or 404', () => [200,404].includes(pm.response.code));",
+          "if (pm.response.code === 200) {",
+          "  const j = pm.response.json(); pm.test('has id', () => j.id);",
+          "}"
+        ]}
+      }],
+      "request": { "method": "GET", "url": "{{BASE_URL}}/v1/sponsors/{{SP_ID}}" }
+    }
+  ]
+}
