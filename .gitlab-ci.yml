@@ -87,6 +87,104 @@ deploy_website:
     # Default: skip
     - when: never
 
+# ------------------------------
+# Backend Release: build & push 2 images, update Lambda, start Batch — non-blocking and AFTER deploy
+# ------------------------------
+backend_release:
+  stage: backend_release
+  image: docker:24.0.7
+  needs: []
+  services:
+    - name: docker:24.0.7-dind
+      alias: docker
+      command: ["--tls=false","--mtu=1460"]
+  allow_failure: true
+  variables:
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
+    # AWS (set in GitLab CI variables)
+    AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+    AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+    # ECR
+    ECR_REGISTRY: $ECR_REGISTRY
+    ECR_REPO_API: $ECR_REPO_API
+    ECR_REPO_LOADER: $ECR_REPO_LOADER
+    IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+    # Lambda
+    LAMBDA_FUNCTION_NAME: $LAMBDA_FUNCTION_NAME
+    # Batch
+    BATCH_JOB_QUEUE: $BATCH_JOB_QUEUE
+    BATCH_JOB_DEFINITION: $BATCH_JOB_DEFINITION
+    BATCH_JOB_NAME: $BATCH_JOB_NAME
+    # Docker build paths (override if needed)
+    API_CONTEXT: "."
+    API_DOCKERFILE: "Dockerfile.api"
+    LOADER_CONTEXT: "."
+    LOADER_DOCKERFILE: "Dockerfile.loader"
+  before_script:
+    - apk add --no-cache curl bash jq aws-cli
+    - aws --version
+    - >
+      aws ecr get-login-password --region "$AWS_DEFAULT_REGION" |
+      docker login --username AWS --password-stdin "$ECR_REGISTRY"
+
+  script:
+    - >
+      set -e;
+      echo "Building API image…";
+      docker build -f "$API_DOCKERFILE" -t "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG" "$API_CONTEXT";
+      docker push "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG";
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        docker tag "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPO_API:latest";
+        docker push "$ECR_REGISTRY/$ECR_REPO_API:latest";
+      fi
+    - >
+      set -e;
+      echo "Building Loader image…";
+      docker build -f "$LOADER_DOCKERFILE" -t "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG" "$LOADER_CONTEXT";
+      docker push "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG";
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        docker tag "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPO_LOADER:latest";
+        docker push "$ECR_REGISTRY/$ECR_REPO_LOADER:latest";
+      fi
+    - >
+      set -e;
+      echo "Updating Lambda function image…";
+      aws lambda update-function-code
+      --function-name "$LAMBDA_FUNCTION_NAME"
+      --image-uri "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG"
+      --region "$AWS_DEFAULT_REGION"
+      | jq -r '.LastUpdateStatus, .StateReason // empty'
+    - |
+      set -e
+      echo "Waiting for Lambda to be Active (~2min max)…"
+      for i in {1..24}; do
+        STATUS=$(aws lambda get-function-configuration \
+          --function-name "$LAMBDA_FUNCTION_NAME" \
+          --region "$AWS_DEFAULT_REGION" | jq -r '.State')
+        echo "Lambda state: $STATUS"
+        [ "$STATUS" = "Active" ] && break
+        sleep 5
+      done
+    - >
+      set -e;
+      echo "Submitting AWS Batch job…";
+      aws batch submit-job
+      --job-name "${BATCH_JOB_NAME:-fbc-refill-$CI_COMMIT_SHORT_SHA}"
+      --job-queue "$BATCH_JOB_QUEUE"
+      --job-definition "$BATCH_JOB_DEFINITION"
+      --region "$AWS_DEFAULT_REGION"
+      --container-overrides 'environment=[]'
+      | tee batch_submit.json;
+      echo "Batch job submitted: $(jq -r .jobId batch_submit.json)"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: on_success
+    - if: '$CI_COMMIT_TAG'
+      when: on_success
+    - when: never
+
 
 # ------------------------------------------------
 # Backend: Unit tests with pytest
@@ -94,6 +192,7 @@ deploy_website:
 backend_unit_tests:
   stage: backend_test
   image: python:3.12-bullseye
+  needs: ["backend_release"]
   before_script:
     - python -V
     - pip install -r "$REQUIREMENTS_FILE_UNIT"
@@ -131,6 +230,7 @@ backend_unit_tests:
 backend_api_tests:
   stage: backend_test
   image: node:20-bullseye
+  needs: ["backend_release"]
   before_script:
     - apt-get update && apt-get install -y python3 python3-pip curl
     - pip install -r "$REQUIREMENTS_FILE_API"
