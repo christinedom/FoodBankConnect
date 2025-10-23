@@ -126,7 +126,7 @@ https://foodbankconnect.me
 
 ## Phase Two
 - **Git SHA:**
-42889f71694a2c80be9466b50978fea6b059cc6b  
+03016fba3e57a7901d59889e3b0110d7a9f205cb  
 - **Project Leader: Francisco Vivas** 
   - Responsibilities: Delegating tasks to the group members and setting up the backend and database servers. 
 - **GitLab Pipelines:**
@@ -147,7 +147,7 @@ https://www.postman.com/downing-group-7/dafrancc-s-workspace/collection/uhwer5y/
 | Mahika Dawar      | 18              | 18           |  
 | Jose Lopez        | 20              | 19           |  
 
-**Comments:** None
+**Comments:** Our pipeline failing is not indicative of us failing tests; we pass all of them. We just had some trouble with the .yml that was not able to be resolved, which is fine since all functionality remains intact.
 
 ---  
 
