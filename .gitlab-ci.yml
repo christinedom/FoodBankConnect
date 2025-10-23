@@ -12,8 +12,8 @@ variables:
   REQUIREMENTS_FILE_UNIT: "fbc-load-db/requirements.txt"
   REQUIREMENTS_FILE_API:  "fbc-rest-api/requirements.txt"
 
-  PYTEST_WORKDIR: "fbc-load-db"
-  PYTEST_TESTPATH: "fbc-load-db/tests"
+  PYTEST_WORKDIR: ""
+  PYTEST_TESTPATH: "tests"
   PYTEST_IGNORE: "frontend/src/selenium_tests"
 
   REPORT_DIR: "reports"
@@ -25,6 +25,8 @@ variables:
 
   API_APP_ENTRY: "fbc-rest-api/main.py"
   API_HEALTH_URL: "http://localhost:8080/health"
+
+  COV_TARGET_DIR: "fbc-load-db"
 
 # ------------------------------------------------
 # Frontend build and deploy remain the same
@@ -192,7 +194,6 @@ backend_release:
 backend_unit_tests:
   stage: backend_test
   image: python:3.12-bullseye
-  needs: []
   before_script:
     - python -V
     - pip install -r "$REQUIREMENTS_FILE_UNIT"
@@ -201,29 +202,22 @@ backend_unit_tests:
   script:
     - |
       echo "CI_PROJECT_DIR: $CI_PROJECT_DIR"
-      echo "PYTEST_WORKDIR: $PYTEST_WORKDIR"
-      # Show tree so we know where tests actually are
+      echo "COV_TARGET_DIR: $COV_TARGET_DIR"
+      echo "Running pytest from repo root on: $PYTEST_TESTPATH"
+
+      # ensure backend code is importable for tests
+      export PYTHONPATH="$CI_PROJECT_DIR/$COV_TARGET_DIR:$PYTHONPATH"
+
+      # list what pytest will see (helps if paths are off)
       ls -la "$CI_PROJECT_DIR"
-      if [ -n "$PYTEST_WORKDIR" ]; then
-        cd "$PYTEST_WORKDIR"
-        echo "Now in: $(pwd)"
-        # list likely test locations
-        ls -la
-        find . -maxdepth 3 -type d \( -name "tests" -o -name "*test*" \) -print || true
-      fi
+      ls -la "$CI_PROJECT_DIR/$COV_TARGET_DIR" || true
+      ls -la "$CI_PROJECT_DIR/$PYTEST_TESTPATH" || true
 
-      # If there is a local 'tests' dir, use it; otherwise let pytest auto-discover
-      if [ -d "tests" ]; then
-        TEST_TARGET="tests"
-      else
-        TEST_TARGET="."
-      fi
-
-      # Run pytest without a hard-coded absolute test path (avoids bad/masked paths)
+      # run tests from repo root, target top-level tests, ignore selenium, and collect coverage only for your backend
       pytest -q --maxfail=1 --disable-warnings \
-        --cov=. \
         --ignore="$CI_PROJECT_DIR/$PYTEST_IGNORE" \
-        "$TEST_TARGET" \
+        "$CI_PROJECT_DIR/$PYTEST_TESTPATH" \
+        --cov="$CI_PROJECT_DIR/$COV_TARGET_DIR" \
         --cov-report=xml:"$CI_PROJECT_DIR/$PYTEST_COVERAGE_XML" \
         --junitxml "$CI_PROJECT_DIR/$PYTEST_JUNIT_XML"
   artifacts:
@@ -238,6 +232,7 @@ backend_unit_tests:
       - $PYTEST_COVERAGE_XML
   rules:
     - when: on_success
+
 
 
 # ------------------------------------------------
