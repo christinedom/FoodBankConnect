@@ -144,7 +144,7 @@ https://www.postman.com/downing-group-7/dafrancc-s-workspace/collection/uhwer5y/
 | Odin Limaye       | 17              | 26           |  
 | Francisco Vivas   | 19              | 28           |  
 | Christine Dominic | 16              | 16.5         |  
-| Mahika Dawar      | 18              | 18           |  
+| Mahika Dawar      | 18              | 20           |  
 | Jose Lopez        | 20              | 19           |  
 
 **Comments:** Our pipeline failing is not indicative of us failing tests; we pass all of them. We just had some trouble with the .yml that was not able to be resolved, which is fine since all functionality remains intact.
