@@ -149,6 +149,7 @@ def fetch_grants(ein: str) -> str:
 # -------------------------------------------------
 
 def scrape(max_results=MAX_RESULTS):
+    print("Scraping for sponsors now.")
     out = []
 
     for keyword in KEYWORDS:

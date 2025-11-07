@@ -141,6 +141,7 @@ def fetch_tax_exempt_date(ein: str):
 
 def scrape(q="food bank", state=None, max_results=MAX_RESULTS):
     """Main scraper: fetch food banks + program entries."""
+    print("Scraping for Foodbanks and Programs now.")
     combined = []
     page = 0
 
