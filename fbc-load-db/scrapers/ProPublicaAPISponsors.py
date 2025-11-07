@@ -4,7 +4,7 @@ import time
 import re
 
 BASE_URL = "https://projects.propublica.org/nonprofits/api/v2"
-MAX_RESULTS = 3
+MAX_RESULTS = 100
 
 KEYWORDS = [
     "foundation",
@@ -34,18 +34,19 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; DataFetcherBot/1.0; +https://example.com/bot)"
 }
 
-# ---------------------- Helpers ----------------------
 
-def classify_affiliation(name: str, org_detail: dict = None) -> str:
-    corp_terms = ["INC", "LLC", "CORP", "COMPANY", "CO.", "LTD", "CORPORATION"]
-    if any(term in name.upper() for term in corp_terms):
-        return "Private Corporation"
-    if org_detail:
-        ntype = org_detail.get("organization_type") or org_detail.get("ntee_code") or ""
-        if ntype:
-            return f"Nonprofit Foundation ({ntype})"
-    return "Nonprofit Foundation"
+# -------------------------------------------------
+# Small Delay (same as other scraper)
+# -------------------------------------------------
 
+def tiny_delay():
+    """Small pause before every Google request."""
+    time.sleep(0.25)
+
+
+# -------------------------------------------------
+# Safety GET Wrapper
+# -------------------------------------------------
 
 def safe_request(url, params=None, max_retries=3, sleep_base=2):
     """Perform GET with retries, backoff, and safe timeout."""
@@ -63,34 +64,68 @@ def safe_request(url, params=None, max_retries=3, sleep_base=2):
             wait = sleep_base * attempt
             print(f"Attempt {attempt} failed for {url}: {e}. Retrying in {wait}s...")
             time.sleep(wait)
-    print(f"❌ Failed to fetch after {max_retries} attempts: {url}")
+    print(f"❌ Failed after {max_retries} attempts: {url}")
     return None
 
 
+# -------------------------------------------------
+# Clean Google Image Fetcher
+# -------------------------------------------------
+
 def fetch_logo(name: str) -> str:
-    """Safely fetch first image URL from Google Custom Search."""
+    """Fetch a clean Google image result, avoiding lookasides."""
     if not name:
         return "N/A"
 
-    query = f"{name} logo"
-    url = (
-        f"https://www.googleapis.com/customsearch/v1"
-        f"?q={query}&cx={GOOGLE_CX}&key={GOOGLE_API_KEY}"
-        f"&searchType=image&num=1"
-    )
+    tiny_delay()
 
-    resp = safe_request(url)
+    params = {
+        "q": f"{name} logo",
+        "cx": GOOGLE_CX,
+        "key": GOOGLE_API_KEY,
+        "searchType": "image",
+        "num": 10   # get multiple results for filtering
+    }
+
+    resp = safe_request("https://www.googleapis.com/customsearch/v1", params=params)
     if not resp:
         return "N/A"
 
     try:
         data = resp.json()
-        if "items" in data and len(data["items"]) > 0:
-            return data["items"][0]["link"]
+        items = data.get("items", [])
+        if not items:
+            return "N/A"
+
+        clean_exts = (".jpg", ".jpeg", ".png", ".gif", ".webp")
+
+        # ✅ Try to find a clean image URL
+        for item in items:
+            link = item.get("link", "")
+            if isinstance(link, str) and link.lower().endswith(clean_exts):
+                return link
+
+        # ✅ Fallback to the first image
+        return items[0].get("link", "N/A")
+
     except Exception as e:
         print(f"Error parsing Google response for '{name}': {e}")
+        return "N/A"
 
-    return "N/A"
+
+# -------------------------------------------------
+# ProPublica Helpers
+# -------------------------------------------------
+
+def classify_affiliation(name: str, org_detail: dict = None) -> str:
+    corp_terms = ["INC", "LLC", "CORP", "COMPANY", "CO.", "LTD", "CORPORATION"]
+    if any(term in name.upper() for term in corp_terms):
+        return "Private Corporation"
+    if org_detail:
+        ntype = org_detail.get("organization_type") or org_detail.get("ntee_code") or ""
+        if ntype:
+            return f"Nonprofit Foundation ({ntype})"
+    return "Nonprofit Foundation"
 
 
 def fetch_tax_exempt_date(ein: str) -> str:
@@ -105,16 +140,15 @@ def fetch_tax_exempt_date(ein: str) -> str:
 
     match = re.search(r"Tax-exempt since ([A-Za-z0-9 ,]+)", resp.text)
     if match:
-        tax_str = match.group(1)
-        if re.search(r"\b\d{4}\b", tax_str):
-            return f"Tax-exempt since {tax_str}"
+        date = match.group(1)
+        if re.search(r"\b\d{4}\b", date):
+            return f"Tax-exempt since {date}"
     return "This is a nonprofit, tax exempt."
 
 
 def fetch_grants(ein: str) -> str:
-    """Get first relevant grant recipient."""
-    url = f"{BASE_URL}/organizations/{ein}.json"
-    resp = safe_request(url)
+    """Find first grant recipient (prefer food-related)."""
+    resp = safe_request(f"{BASE_URL}/organizations/{ein}.json")
     if not resp:
         return "N/A"
 
@@ -125,23 +159,28 @@ def fetch_grants(ein: str) -> str:
             grants = filing.get("grants", [])
             if not grants:
                 continue
-            for grant in grants:
-                recipient = grant.get("recipient_name", "")
-                if any(keyword in recipient.lower() for keyword in FOOD_RELATED_KEYWORDS):
-                    return recipient
+            for g in grants:
+                rname = g.get("recipient_name", "")
+                if any(word in rname.lower() for word in FOOD_RELATED_KEYWORDS):
+                    return rname
             return grants[0].get("recipient_name", "N/A")
     except Exception as e:
         print(f"Error parsing grants for EIN {ein}: {e}")
+
     return "N/A"
 
 
-# ---------------------- Main Scraper ----------------------
+# -------------------------------------------------
+# Main Scraper
+# -------------------------------------------------
 
 def scrape(max_results=MAX_RESULTS):
-    all_results = []
+    out = []
+
     for keyword in KEYWORDS:
         page = 0
-        while len(all_results) < max_results:
+
+        while len(out) < max_results:
             params = {"q": keyword, "page": page}
             resp = safe_request(f"{BASE_URL}/search.json", params=params)
             if not resp:
@@ -153,7 +192,7 @@ def scrape(max_results=MAX_RESULTS):
                 break
 
             for org in orgs:
-                if len(all_results) >= max_results:
+                if len(out) >= max_results:
                     break
 
                 name = org.get("name", "N/A")
@@ -161,7 +200,6 @@ def scrape(max_results=MAX_RESULTS):
                 city = org.get("city", "N/A")
                 state_code = org.get("state", "N/A")
 
-                # details
                 detail_resp = safe_request(f"{BASE_URL}/organizations/{ein}.json")
                 detail_json = detail_resp.json() if detail_resp else {}
                 detail = detail_json.get("organization", {})
@@ -169,14 +207,13 @@ def scrape(max_results=MAX_RESULTS):
                 about = fetch_tax_exempt_date(ein)
                 affiliation = classify_affiliation(name, detail)
                 past_involvement = fetch_grants(ein)
-                sponsor_link = f"https://projects.propublica.org/nonprofits/organizations/{ein}" if ein else "N/A"
+                sponsor_link = f"https://projects.propublica.org/nonprofits/organizations/{ein}"
 
-                logo_url = fetch_logo(name)
-                time.sleep(1.5)  # prevent Google rate limits
+                logo = fetch_logo(name)  # ✅ tiny delay already inside
 
                 donor_json = {
                     "name": name,
-                    "image": logo_url,
+                    "image": logo,
                     "alt": f"{name} Logo",
                     "contribution": "Donations / Grants",
                     "contributionAmt": "N/A",
@@ -190,21 +227,27 @@ def scrape(max_results=MAX_RESULTS):
                     "EIN": str(ein)
                 }
 
-                all_results.append(donor_json)
+                out.append(donor_json)
 
             page += 1
             if page >= data.get("num_pages", 0):
                 break
-            time.sleep(1)
 
-        if len(all_results) >= max_results:
-            break
-
-    return all_results
+    return out
 
 
-# ---------------------- Run ----------------------
+# -------------------------------------------------
+# Run + Debug Output
+# -------------------------------------------------
 
 if __name__ == "__main__":
-    donors = scrape()
-    print(f"✅ Scraped {len(donors)} donors total")
+    sponsors = scrape()
+    print(f"✅ Scraped {len(sponsors)} sponsors total")
+
+    """
+    debug_path = "sponsor_debug_output.json"
+    with open(debug_path, "w", encoding="utf-8") as f:
+        json.dump(sponsors, f, indent=2, ensure_ascii=False)
+
+    print(f"📝 Debug file written to {debug_path}")
+    """

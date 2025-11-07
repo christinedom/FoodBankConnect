@@ -158,13 +158,19 @@ https://www.postman.com/downing-group-7/dafrancc-s-workspace/collection/uhwer5y/
 - **Git SHA:**  
 - **Project Leader:**  
   - Responsibilities:  
-- **GitLab Pipelines:**  
+- **GitLab Pipelines:**
+https://gitlab.com/OdinLimaye/cs373-fall-2025-55085_07/-/pipelines  
+- **Backend API Link:**
+https://api.foodbankconnect.me/v1/
 - **Website:**  
+https://foodbankconnect.me
+- **Postman (API Docs Link):**
+https://www.postman.com/downing-group-7/dafrancc-s-workspace/collection/uhwer5y/food-bank-api-v2
 
 ### Time Tracking
 | Member            | Estimated Hours | Actual Hours |  
 |-------------------|-----------------|--------------|  
-| Odin Limaye       |                 |              |  
+| Odin Limaye       | 16              |              |  
 | Francisco Vivas   |                 |              |  
 | Christine Dominic |                 |              |  
 | Mahika Dawar      |                 |              |  
