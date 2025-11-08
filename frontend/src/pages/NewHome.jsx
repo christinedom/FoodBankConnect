@@ -64,32 +64,12 @@ const NewHome = () => {
 						<br />
 						mission to end hunger!
 					</p>
-					<table id="nav-buttons">
-						<tbody>
-							<tr id="select-tr">
-								<td>
-									<Link to="/foodbanks" className={styles["food-banks-btn"]}>
-										<strong>View Food Banks</strong>
-									</Link>
-								</td>
-								<td>
-									<Link to="/sponsors" className={styles["sponsors-btn"]}>
-										<strong>View Sponsors</strong>
-									</Link>
-								</td>
-								<td>
-									<Link to="/programs" className={styles["programs-btn"]}>
-										<strong>View Programs</strong>
-									</Link>
-								</td>
-								<td>
-									<Link to="/about" className={styles["about-btn"]}>
-										<strong>About the Site</strong>
-									</Link>
-								</td>
-							</tr>
-						</tbody>
-					</table>
+					<div className={styles.navButtons}>
+						<Link to="/foodbanks" className={styles["food-banks-btn"]}><strong>View Food Banks</strong></Link>
+						<Link to="/sponsors" className={styles["sponsors-btn"]}><strong>View Sponsors</strong></Link>
+						<Link to="/programs" className={styles["programs-btn"]}><strong>View Programs</strong></Link>
+						<Link to="/about" className={styles["about-btn"]}><strong>About the Site</strong></Link>
+					</div>
 				</div>
 			</div>
 		</div>
