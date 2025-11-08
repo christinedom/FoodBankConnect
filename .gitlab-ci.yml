@@ -1,37 +1,26 @@
 stages:
   - build
-  - deploy         
-  - backend_release 
-  - backend_test    
+  - deploy
+  - backend_release
+  - backend_test
   - selenium_tests
   - jest_tests
 
-# ------------------------------------------------
-# GLOBAL ENVIRONMENT VARIABLES
-# ------------------------------------------------
 variables:
   REQUIREMENTS_FILE_UNIT: "fbc-load-db/requirements.txt"
   REQUIREMENTS_FILE_API:  "fbc-rest-api/requirements.txt"
-
   PYTEST_WORKDIR: ""
   PYTEST_TESTPATH: "tests"
   PYTEST_IGNORE: "frontend/src/selenium_tests"
-
   REPORT_DIR: "reports"
   PYTEST_JUNIT_XML: "$REPORT_DIR/pytest-report.xml"
   PYTEST_COVERAGE_XML: "$REPORT_DIR/coverage.xml"
-
   POSTMAN_COLLECTION: "tests/postman/collection.json"
   NEWMAN_JUNIT_XML: "$REPORT_DIR/newman-results.xml"
-
   API_APP_ENTRY: "fbc-rest-api/main.py"
   API_HEALTH_URL: "http://localhost:8080/health"
-
   COV_TARGET_DIR: "fbc-load-db"
 
-# ------------------------------------------------
-# Frontend build and deploy remain the same
-# ------------------------------------------------
 build_react:
   stage: build
   image: node:20-bullseye
@@ -43,23 +32,17 @@ build_react:
     paths:
       - frontend/build
   rules:
-    # Allow override via variable in the UI or API
     - if: '$FORCE_FRONTEND == "1"'
       when: on_success
-
-    # Build only if relevant files changed
     - changes:
-        - frontend/**/*  
-        - frontend/.env*      
-        - package.json         
+        - frontend/**/*
+        - frontend/.env*
+        - package.json
         - package-lock.json
-        - frontend/package.json  
+        - frontend/package.json
         - frontend/package-lock.json
       when: on_success
-
-    # Default: skip
     - when: never
-
 
 deploy_website:
   stage: deploy
@@ -72,11 +55,8 @@ deploy_website:
     - aws s3 sync frontend/build/ s3://$S3_BUCKET --delete
     - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DIST_ID --paths "/*"
   rules:
-    # Allow manual forcing
     - if: '$FORCE_FRONTEND == "1" && $CI_COMMIT_BRANCH == "main"'
       when: on_success
-
-    # Deploy only on main when frontend changed (i.e., build ran)
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - frontend/**/*
@@ -86,13 +66,8 @@ deploy_website:
         - frontend/package.json
         - frontend/package-lock.json
       when: on_success
-
-    # Default: skip
     - when: never
 
-# ------------------------------
-# Backend Release: build & push 2 images, update Lambda, start Batch — non-blocking and AFTER deploy
-# ------------------------------
 backend_release:
   stage: backend_release
   image: docker:24.0.7
@@ -105,22 +80,17 @@ backend_release:
   variables:
     DOCKER_HOST: "tcp://docker:2375"
     DOCKER_TLS_CERTDIR: ""
-    # AWS (set in GitLab CI variables)
     AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
     AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
-    # ECR
     ECR_REGISTRY: $ECR_REGISTRY
     ECR_REPO_API: $ECR_REPO_API
     ECR_REPO_LOADER: $ECR_REPO_LOADER
     IMAGE_TAG: $CI_COMMIT_SHORT_SHA
-    # Lambda
     LAMBDA_FUNCTION_NAME: $LAMBDA_FUNCTION_NAME
-    # Batch
     BATCH_JOB_QUEUE: $BATCH_JOB_QUEUE
     BATCH_JOB_DEFINITION: $BATCH_JOB_DEFINITION
     BATCH_JOB_NAME: $BATCH_JOB_NAME
-    # Docker build paths (override if needed)
     API_CONTEXT: "."
     API_DOCKERFILE: "Dockerfile.api"
     LOADER_CONTEXT: "."
@@ -135,52 +105,50 @@ backend_release:
   script:
     - >
       set -e;
-      echo "Building API image…";
       docker build -f "$API_DOCKERFILE" -t "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG" "$API_CONTEXT";
       docker push "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG";
       if [ "$CI_COMMIT_BRANCH" = "main" ]; then
         docker tag "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPO_API:latest";
         docker push "$ECR_REGISTRY/$ECR_REPO_API:latest";
       fi
+
+    # - >
+    #   set -e;
+    #   docker build -f "$LOADER_DOCKERFILE" -t "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG" "$LOADER_CONTEXT";
+    #   docker push "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG";
+    #   if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+    #     docker tag "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPO_LOADER:latest";
+    #     docker push "$ECR_REGISTRY/$ECR_REPO_LOADER:latest";
+    #   fi
+
     - >
       set -e;
-      echo "Building Loader image…";
-      docker build -f "$LOADER_DOCKERFILE" -t "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG" "$LOADER_CONTEXT";
-      docker push "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG";
-      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
-        docker tag "$ECR_REGISTRY/$ECR_REPO_LOADER:$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPO_LOADER:latest";
-        docker push "$ECR_REGISTRY/$ECR_REPO_LOADER:latest";
-      fi
-    - >
-      set -e;
-      echo "Updating Lambda function image…";
       aws lambda update-function-code
       --function-name "$LAMBDA_FUNCTION_NAME"
       --image-uri "$ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG"
       --region "$AWS_DEFAULT_REGION"
       | jq -r '.LastUpdateStatus, .StateReason // empty'
+
     - |
       set -e
-      echo "Waiting for Lambda to be Active (~2min max)…"
       for i in {1..24}; do
         STATUS=$(aws lambda get-function-configuration \
           --function-name "$LAMBDA_FUNCTION_NAME" \
           --region "$AWS_DEFAULT_REGION" | jq -r '.State')
-        echo "Lambda state: $STATUS"
         [ "$STATUS" = "Active" ] && break
         sleep 5
       done
-    - >
-      set -e;
-      echo "Submitting AWS Batch job…";
-      aws batch submit-job
-      --job-name "${BATCH_JOB_NAME:-fbc-refill-$CI_COMMIT_SHORT_SHA}"
-      --job-queue "$BATCH_JOB_QUEUE"
-      --job-definition "$BATCH_JOB_DEFINITION"
-      --region "$AWS_DEFAULT_REGION"
-      --container-overrides 'environment=[]'
-      | tee batch_submit.json;
-      echo "Batch job submitted: $(jq -r .jobId batch_submit.json)"
+
+    # - >
+    #   set -e;
+    #   aws batch submit-job
+    #   --job-name "${BATCH_JOB_NAME:-fbc-refill-$CI_COMMIT_SHORT_SHA}"
+    #   --job-queue "$BATCH_JOB_QUEUE"
+    #   --job-definition "$BATCH_JOB_DEFINITION"
+    #   --region "$AWS_DEFAULT_REGION"
+    #   --container-overrides 'environment=[]'
+    #   | tee batch_submit.json;
+
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: on_success
@@ -188,25 +156,19 @@ backend_release:
       when: on_success
     - when: never
 
-# ------------------------------------------------
-# Frontend tests: Tests with selenium
-# ------------------------------------------------
 selenium_tests:
   stage: selenium_tests
   image: python:3.12-bullseye
   before_script:
     - apt-get update && apt-get install -y wget unzip xvfb libxi6 libgconf-2-4 gnupg
-    # Install Google Chrome
     - wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add -
     - echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
     - apt-get update && apt-get install -y google-chrome-stable
-    # Match ChromeDriver to Chrome major version
     - CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+')
     - wget -q "https://chromedriver.storage.googleapis.com/$CHROME_VERSION/chromedriver_linux64.zip"
     - unzip chromedriver_linux64.zip
     - mv chromedriver /usr/local/bin/
     - chmod +x /usr/local/bin/chromedriver
-    # Python deps for Selenium tests
     - pip install -r "frontend/tests/requirements.txt"
     - pip install pytest
   script:
@@ -226,11 +188,6 @@ selenium_tests:
       when: on_success
     - when: never
 
-
-
-# ------------------------------------------------
-# Frontend tests: Tests with Jest
-# ------------------------------------------------
 jest_tests:
   stage: jest_tests
   image: node:20-bullseye

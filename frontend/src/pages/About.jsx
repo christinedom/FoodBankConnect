@@ -176,7 +176,7 @@ const About = () => {
                     <td>{member.commits}</td>
                     <td>{member.issuesOpened}</td>
                     <td>{member.issuesClosed}</td>
-                    <td>0</td>
+                    <td>10</td>
                   </tr>
                 );
               })}

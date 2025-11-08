@@ -7,9 +7,6 @@ from bs4 import BeautifulSoup
 BASE_URL = "https://projects.propublica.org/nonprofits/api/v2"
 MAX_RESULTS = 100
 
-GOOGLE_API_KEY = "AIzaSyCaX5owOlwzJq59MYdCl6lV5BKt3W3K-KE"
-GOOGLE_CX = "47dcfe213c7274b68"
-
 ABOUT_KEYWORDS = [
     "about",
     "food",
@@ -38,8 +35,8 @@ def google_search_raw(query: str):
     tiny_delay()
     params = {
         "q": query,
-        "cx": GOOGLE_CX,
-        "key": GOOGLE_API_KEY,
+        "cx": "47dcfe213c7274b68",
+        "key": "AIzaSyCaX5owOlwzJq59MYdCl6lV5BKt3W3K-KE",
         "num": 3
     }
     resp = requests.get("https://www.googleapis.com/customsearch/v1", params=params)
@@ -51,8 +48,8 @@ def fetch_google_image(query: str):
     tiny_delay()
     params = {
         "q": query,
-        "cx": GOOGLE_CX,
-        "key": GOOGLE_API_KEY,
+        "cx": "47dcfe213c7274b68",
+        "key": "AIzaSyCaX5owOlwzJq59MYdCl6lV5BKt3W3K-KE",
         "num": 10,
         "searchType": "image"
     }
