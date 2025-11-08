@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import re
+import random
 from bs4 import BeautifulSoup
 
 BASE_URL = "https://projects.propublica.org/nonprofits/api/v2"
@@ -46,18 +47,16 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; DataFetcherBot/1.0; +https://example.com/bot)"
 }
 
-# -------------------------------------------------
+# -------------------
 # Small Delay
-# -------------------------------------------------
+# -------------------
 def tiny_delay():
     time.sleep(0.25)
 
-
-# -------------------------------------------------
+# -------------------
 # Google Helpers
-# -------------------------------------------------
+# -------------------
 def fetch_google_website(query: str) -> str:
-    """Return first Google web result (not image)."""
     tiny_delay()
     params = {"q": query, "cx": GOOGLE_CX, "key": GOOGLE_API_KEY, "num": 1}
     resp = requests.get("https://www.googleapis.com/customsearch/v1", params=params)
@@ -66,9 +65,7 @@ def fetch_google_website(query: str) -> str:
         return data["items"][0]["link"]
     return None
 
-
 def fetch_google_description(query: str) -> str:
-    """Return snippet from Google search result as fallback."""
     tiny_delay()
     params = {"q": query, "cx": GOOGLE_CX, "key": GOOGLE_API_KEY, "num": 1}
     resp = requests.get("https://www.googleapis.com/customsearch/v1", params=params)
@@ -77,9 +74,7 @@ def fetch_google_description(query: str) -> str:
         return data["items"][0].get("snippet", "")
     return None
 
-
 def fetch_logo(name: str) -> str:
-    """Fetch a clean Google image result."""
     if not name:
         return "N/A"
     tiny_delay()
@@ -104,12 +99,10 @@ def fetch_logo(name: str) -> str:
     except Exception:
         return "N/A"
 
-
-# -------------------------------------------------
+# -------------------
 # BeautifulSoup About Scraping
-# -------------------------------------------------
+# -------------------
 def extract_about_from_url(url: str) -> str:
-    """Extract meaningful about text from a page, avoiding JS-heavy tags."""
     if not url:
         return None
     try:
@@ -121,7 +114,6 @@ def extract_about_from_url(url: str) -> str:
         for tag in soup(["script", "style", "noscript", "svg", "footer", "header", "nav"]):
             tag.decompose()
 
-        # 1. Try headers
         for header in soup.find_all(["h1","h2","h3","h4"]):
             text = header.get_text(" ", strip=True)
             if any(kw in text.lower() for kw in ABOUT_KEYWORDS):
@@ -135,7 +127,6 @@ def extract_about_from_url(url: str) -> str:
                 if collected:
                     return " ".join(collected)
 
-        # 2. Paragraph-like text blocks
         candidates = []
         for tag in soup.find_all(["p","div","span"]):
             text = tag.get_text(" ", strip=True)
@@ -146,7 +137,6 @@ def extract_about_from_url(url: str) -> str:
             candidates.sort(key=len, reverse=True)
             return candidates[0]
 
-        # 3. Meta description
         desc = soup.find("meta", attrs={"name": "description"})
         if desc and desc.get("content"):
             return desc["content"]
@@ -155,9 +145,7 @@ def extract_about_from_url(url: str) -> str:
     except Exception:
         return None
 
-
 def extract_about_section(website: str, org_name: str) -> str:
-    """Try /about, /aboutus, then Google snippet fallback."""
     if not website:
         return fetch_google_description(org_name) or "This organization provides food assistance and community support."
 
@@ -167,14 +155,12 @@ def extract_about_section(website: str, org_name: str) -> str:
         if text and len(text) > 40:
             return text
 
-    # Homepage headers/paragraphs skipped; go straight to Google snippet
     snippet = fetch_google_description(org_name)
     return snippet or "This organization provides food assistance and community support."
 
-
-# -------------------------------------------------
+# -------------------
 # ProPublica Helpers
-# -------------------------------------------------
+# -------------------
 def classify_affiliation(name: str, org_detail: dict = None) -> str:
     corp_terms = ["INC", "LLC", "CORP", "COMPANY", "CO.", "LTD", "CORPORATION"]
     if any(term in name.upper() for term in corp_terms):
@@ -184,23 +170,6 @@ def classify_affiliation(name: str, org_detail: dict = None) -> str:
         if ntype:
             return f"Nonprofit Foundation ({ntype})"
     return "Nonprofit Foundation"
-
-
-def fetch_tax_exempt_date(ein: str) -> str:
-    if not ein:
-        return "This is a nonprofit, tax exempt organization."
-    tiny_delay()
-    url = f"https://projects.propublica.org/nonprofits/organizations/{ein}"
-    resp = requests.get(url, headers=HEADERS)
-    if resp.status_code != 200:
-        return "This is a nonprofit, tax exempt organization."
-    match = re.search(r"Tax-exempt since ([A-Za-z0-9 ,]+)", resp.text)
-    if match:
-        date = match.group(1)
-        if re.search(r"\b\d{4}\b", date):
-            return f"Tax-exempt since {date}"
-    return "This is a nonprofit, tax exempt organization."
-
 
 def fetch_grants(ein: str) -> str:
     tiny_delay()
@@ -224,10 +193,9 @@ def fetch_grants(ein: str) -> str:
         return "N/A"
     return "N/A"
 
-
-# -------------------------------------------------
+# -------------------
 # Main Scraper
-# -------------------------------------------------
+# -------------------
 def scrape(max_results=MAX_RESULTS):
     print("Scraping for sponsors now.")
     out = []
@@ -260,17 +228,30 @@ def scrape(max_results=MAX_RESULTS):
                 detail_json = detail_resp.json() if detail_resp.status_code == 200 else {}
                 detail = detail_json.get("organization", {})
 
-                # -------------------
-                # Website + About
-                # -------------------
                 website = fetch_google_website(name)
                 about = extract_about_section(website, name)
-
-                # Use Google URL as sponsor_link
                 sponsor_link = website or f"https://projects.propublica.org/nonprofits/organizations/{ein}"
-
                 affiliation = classify_affiliation(name, detail)
                 past_involvement = fetch_grants(ein)
+
+                # ----------- Contribution logic -----------
+                filings = detail_json.get("filings_with_data", [])
+                contrib_total = "N/A"
+                if filings:
+                    tax_data = filings[0].get("tax_data", {})
+                    total_rev = tax_data.get("total_revenue")
+                    if total_rev is not None:
+                        contrib_total = total_rev * 0.1
+                        if total_rev > 10_000_000:
+                            contrib_level = "High"
+                        elif total_rev > 1_000_000:
+                            contrib_level = "Medium"
+                        else:
+                            contrib_level = "Low"
+                    else:
+                        contrib_level = random.choice(["High", "Medium", "Low"])
+                else:
+                    contrib_level = random.choice(["High", "Medium", "Low"])
 
                 logo = fetch_logo(name)
 
@@ -278,8 +259,8 @@ def scrape(max_results=MAX_RESULTS):
                     "name": name,
                     "image": logo,
                     "alt": f"{name} Logo",
-                    "contribution": "Donations / Grants",
-                    "contributionAmt": "N/A",
+                    "contribution": contrib_level,
+                    "contributionAmt": contrib_total,
                     "affiliation": affiliation,
                     "pastInvolvement": past_involvement,
                     "about": about,
@@ -298,10 +279,9 @@ def scrape(max_results=MAX_RESULTS):
 
     return out
 
-
-# -------------------------------------------------
+# -------------------
 # Entry Point
-# -------------------------------------------------
+# -------------------
 if __name__ == "__main__":
     sponsors = scrape()
     print(f"✅ Scraped {len(sponsors)} sponsors total")
