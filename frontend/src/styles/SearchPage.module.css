@@ -1,0 +1,63 @@
+.container {
+  padding: 2em;
+  text-align: center;
+  color: #fff;
+}
+
+.searchBar {
+  display: flex;
+  justify-content: center;
+  gap: 0.5em;
+  margin: 1em 0 2em;
+}
+
+.searchBar input {
+  width: 50%;
+  padding: 0.75em;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+}
+
+.searchBar button {
+  background: rgba(200,200,200,0.3);
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 0.75em 1.25em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.searchBar button:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5em;
+  align-items: center;
+}
+
+.resultCard {
+  background: rgba(180, 180, 180, 0.25);
+  backdrop-filter: blur(6px);
+  padding: 1em 2em;
+  border-radius: 12px;
+  width: 60%;
+  text-align: left;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+.modelTag {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+mark {
+  background: rgba(255, 255, 0, 0.5);
+  padding: 0 2px;
+  border-radius: 3px;
+}
