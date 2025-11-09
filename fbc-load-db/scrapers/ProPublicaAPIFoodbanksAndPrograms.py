@@ -2,6 +2,7 @@ import requests
 import json
 import re
 import time
+import random
 from bs4 import BeautifulSoup
 
 BASE_URL = "https://projects.propublica.org/nonprofits/api/v2"
@@ -86,7 +87,6 @@ def fetch_google_website_and_about(name: str):
     website = first.get("link", "N/A")
     snippet = first.get("snippet")
 
-    # Meta descriptions pulled by Google (even for JS-heavy sites)
     meta_about = None
     pagemap = first.get("pagemap", {})
     meta_list = pagemap.get("metatags", [])
@@ -119,11 +119,9 @@ def extract_about_from_url(url: str) -> str:
 
         soup = BeautifulSoup(resp.text, "html.parser")
 
-        # Remove junk
         for tag in soup(["script", "style", "noscript", "svg", "footer", "header", "nav"]):
             tag.decompose()
 
-        # 1. HEADER-BASED ABOUT extraction
         for header in soup.find_all(["h1", "h2", "h3", "h4"]):
             header_text = header.get_text(strip=True).lower()
             if any(kw in header_text for kw in ABOUT_KEYWORDS):
@@ -137,12 +135,10 @@ def extract_about_from_url(url: str) -> str:
                 if collected:
                     return " ".join(collected)
 
-        # 2. Meta description inside page HTML
         desc = soup.find("meta", attrs={"name": "description"})
         if desc and desc.get("content"):
             return desc["content"]
 
-        # 3. Long paragraph/div/span text
         candidate_blocks = []
         for tag in soup.find_all(["p", "div", "span"]):
             text = tag.get_text(" ", strip=True)
@@ -158,7 +154,6 @@ def extract_about_from_url(url: str) -> str:
             candidate_blocks.sort(key=len, reverse=True)
             return candidate_blocks[0]
 
-        # 4. Basic all-text fallback
         all_text = soup.get_text(" ", strip=True)
         if len(all_text) > 40:
             chunks = [c.strip() for c in re.split(r"[.!?]", all_text) if len(c.strip()) > 40]
@@ -172,28 +167,21 @@ def extract_about_from_url(url: str) -> str:
 
 
 def extract_about_section(website: str) -> str:
-    """
-    First try /about and /aboutus.
-    Then fallback to homepage.
-    """
     if not website or website == "N/A":
         return None
 
     base = website.rstrip("/")
 
-    # 1. Try /about
     about_url = base + "/about"
     about_text = extract_about_from_url(about_url)
     if about_text and len(about_text) > 40:
         return about_text
 
-    # 2. Try /aboutus
     aboutus_url = base + "/aboutus"
     aboutus_text = extract_about_from_url(aboutus_url)
     if aboutus_text and len(aboutus_text) > 40:
         return aboutus_text
 
-    # 3. Homepage
     return extract_about_from_url(website)
 
 
@@ -224,6 +212,7 @@ def fetch_organization(ein: str):
 def infer_services(text):
     text = (text or "").lower()
     services = []
+
     if "nutrition" in text:
         services.append("Nutrition Education")
     if "meal" in text or "food" in text or "pantry" in text:
@@ -232,9 +221,32 @@ def infer_services(text):
         services.append("Culinary Training Program")
     if "snap" in text:
         services.append("SNAP Outreach")
+    if "in need" in text or "income" or "impoverished":
+        services.append("Low-Income Assistance")
+
     if not services:
         services.append("Food Distribution")
+
     return services
+
+
+# NEW: Infer program type from about text
+def infer_program_type(text):
+    text = (text or "").lower()
+
+    if "training" in text or "culinary" in text:
+        return "Class"
+
+    if "nutrition" in text or "education" in text:
+        return "Education"
+
+    if "snap" in text or "benefits" in text:
+        return "Benefits Assistance"
+    
+    if "meal" in text or "food" in text or "pantry" in text or "distribution" in text:
+        return "Food Distribution"
+
+    return "Food Distribution"
 
 
 # -------------------------------
@@ -272,58 +284,51 @@ def scrape(q="food bank", state=None, max_results=MAX_RESULTS):
                 zipcode = "N/A"
                 phone = "N/A"
 
-            # GOOGLE WEBSITE + ABOUT META/SNIPPET
             website, google_about = fetch_google_website_and_about(name)
 
-            # SCRAPED ABOUT
             about = extract_about_section(website)
-
-            # If scraping failed, use Google's extracted description/snippet
             if not about:
                 about = google_about
-
-            # If still nothing, try homepage one more time
             if not about:
                 about = extract_about_from_url(website)
-
-            # Final fallback
             if not about:
                 about = "This organization provides food assistance and community support."
 
-            # Infer services
             services_list = infer_services(about)
             program_name = f"{name} {' / '.join(services_list)} Program"
 
-            # IMAGE (Google)
             foodbank_image = fetch_google_image(f"{name} food bank")
             program_image = foodbank_image
 
-            # JSON OBJECTS
+            random_level = random.choice(["High", "Medium", "Low"])
+
+            if state_code in ["TX", "AZ", "NM", "CA"]:
+                languages = ["English", "Spanish"]
+            else:
+                languages = ["English"]
+
             foodbank_json = {
                 "about": about,
-                "capacity": "N/A",
+                "capacity": random_level,
                 "city": city,
                 "state": state_code,
-                "eligibility": "N/A",
+                "eligibility": "Everybody",
                 "image": foodbank_image,
-                "languages": ["English"],
+                "languages": languages,
                 "name": name,
                 "phone": phone,
                 "services": [program_name],
                 "type": "foodbank",
-                "urgency": "High",
+                "urgency": random_level,
                 "website": website,
                 "zipcode": zipcode
             }
 
             program_json = {
                 "name": program_name,
-                "program_type": (
-                    "class" if "training" in program_name.lower() or "culinary" in program_name.lower()
-                    else "service"
-                ),
-                "eligibility": "N/A",
-                "frequency": "Weekly",
+                "program_type": infer_program_type(about),
+                "eligibility": "Everybody",
+                "frequency": random.choice(["Weekly", "Monthly", "Yearly"]),
                 "cost": "Free",
                 "host": name,
                 "detailsPage": program_name.replace(" ", "-").lower(),
@@ -350,7 +355,6 @@ if __name__ == "__main__":
     results = scrape()
     print(f"✅ Retrieved {len(results)} total entries (foodbanks + programs).")
 
-    # --- DEBUG OUTPUT ---
     """
     temp_path = "debug_output.json"
     with open(temp_path, "w", encoding="utf-8") as f:
