@@ -40,13 +40,29 @@ crawling in our scrapers since this would vastly increase efficiency.
 # Reflection on Use
 
 ## What specific improvements to your code or understanding came from this AI interaction?
-
+In the code we used for pagination, we were able to make this process dynamic for the various filters and 
+sorting methods we implemented, adapting to show different amounts of instance cards based on the filter
+query. AI helped us figure out how to do this by offering insight on how pagination works along with how 
+to properly implement it when the number of features being shown and the number of features per page are 
+not known amounts. We also improved our understanding in regards to AWS and its role in our API through 
+conceptual explanations from AI.
 
 ## How did you decide what to keep or ignore from the AI’s suggestions?
-
+We used common sense and our knowledge of the scope of the project to determine which AI suggestions were 
+neither realistic nor feasible. The AI recommended various types of recursive web crawling across multiple 
+sites for each foodbank instance during the web scraping process. We chose to disregard this suggestion since
+this would be wildly overblown for our small project. Scraping would take hours to fully fill our database and 
+this would have placed a huge burden on the API's we were using. This seemed more fitting for a commercial 
+development server, not a school project.
 
 ## Did the AI ever produce an incorrect or misleading suggestion? How did you detect that?
-
+Yes, the AI had some confusion about AWS and the API's we were using as sources. Originally, AI did not fully 
+understand what we were trying to do with our implementation of filtering and searching. So, it suggested we 
+perform these features on the frontend of the website, but we are required to perform them in the backend using 
+new API endpoints. AI was then a bit confused when attempting to explain to us how to create new endpoints for 
+these purposes on AWS, but after explaining more clearly what we were trying to do, better answers were given. 
+We detected these mistakes with our common sense since the suggestions violated the direction in which we were 
+heading with the project.
 
 ---
 
@@ -54,14 +70,23 @@ crawling in our scrapers since this would vastly increase efficiency.
 
 ## Paste a before-and-after snippet showing where you changed your own code in response to AI guidance.
 Before:   
-
+total_rev = filings.get("total_revenue")
+if total_rev is not None:
+    contrib_total = total_rev * 0.1
 
 
 After:   
-
+if filings:
+    tax_data = filings[0].get("tax_data", {})
+    total_rev = tax_data.get("total_revenue")
+    if total_rev is not None:
+        contrib_total = total_rev * 0.1
 
 ## In 2–3 sentences, explain what you learned by making this change.
-
+We learned that ProPublica API sometimes returns NULL values for the tax filings field, and this can cause 
+our script to break. So, we need to check the field for existence before proceeding to act on it. AI also 
+helped us learn that some of the sub-fields of the returned JSON from ProPublica have additional revenue and 
+contribution information that could help populate our instance fields.
 
 ---
 
