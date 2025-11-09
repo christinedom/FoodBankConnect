@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # ============================================================================
 #  © 2025 Francisco Vivas Puerto (aka “DaFrancc”)
 #  All rights reserved. This file is part of the FoodBankConnect API.
@@ -40,18 +41,14 @@ from sqlalchemy.exc import (
     TimeoutError as SQLAlchemyTimeout,
 )
 
-# ------------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 # Configuration
-# ------------------------------------------------------------------------------
-
+# -------------------------------------------------------------------------
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    (
-        f"postgresql+psycopg://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
-        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME')}"
-        # Enforce SSL to managed databases when not otherwise configured
-        f"{'?sslmode=require' if os.getenv('DATABASE_URL') is None else ''}"
-    ),
+    f"postgresql+psycopg://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+    f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME')}"
+    f"{'?sslmode=require' if os.getenv('DATABASE_URL') is None else ''}"
 )
 
 DB_SCHEMA = os.getenv("DB_SCHEMA", "app")
@@ -176,14 +173,23 @@ def fetch_one(resource: str, item_id: str) -> Optional[Dict[str, Any]]:
     return _row_to_dict(row) if row else None
 
 
-def fetch_list(resource: str, start: Optional[str], size: int) -> Tuple[List[Dict[str, Any]], Optional[str]]:
+def fetch_list(resource: str, start: Optional[str], size: int,
+               filters: Dict[str, Any] = None, sort: List[str] = None) -> Tuple[List[Dict[str, Any]], Optional[str]]:
     """
-    Retrieves a page of items using numeric-first ordering with cursor semantics.
+    Retrieves a page of items using optional filtering and sorting.
     Returns a list of dictionaries and a next_start cursor if available.
     """
     n = _clamp_page_size(size)
     base = f"SELECT * FROM {_table_qualified(resource)}"
-    sql_str, params = _apply_cursor(base, start, n)
+
+    filters = filters or {}
+    sort = sort or []
+
+    # Build WHERE and ORDER BY dynamically
+    filter_sort_sql, params = _apply_filters_and_sort(resource, filters, sort)
+
+    sql_str = base + filter_sort_sql + "\nLIMIT :n"
+    params["n"] = n
 
     with engine.connect() as conn:
         rows = conn.execute(text(sql_str), params).fetchall()
@@ -253,6 +259,52 @@ def _apply_cursor(base_select: str, start: Optional[str], n: int) -> Tuple[str, 
         """,
         params,
     )
+
+# ------------------------------------------------------------------------------
+# Filtering and sorting helper
+# ------------------------------------------------------------------------------
+
+def _apply_filters_and_sort(resource: str, filters: Dict[str, Any], sort: List[str]) -> Tuple[str, Dict[str, Any]]:
+    """
+    Builds dynamic SQL WHERE and ORDER BY clauses for filtering and sorting.
+    """
+    where_clauses = []
+    order_clauses = []
+    params: Dict[str, Any] = {}
+
+    # --- Filters ---
+    for i, (col, val) in enumerate(filters.items()):
+        param = f"f{i}"
+
+        if col == "languages":
+            # Use JSON containment operator with a literal JSON array string
+            where_clauses.append(f"{col} @> :{param}")
+            params[param] = f'["{val}"]'  # valid JSON string, not casted
+
+        elif "%" in val:
+            where_clauses.append(f"{col} LIKE :{param}")
+            params[param] = val
+
+        else:
+            where_clauses.append(f"{col} = :{param}")
+            params[param] = val
+
+    where_sql = ""
+    if where_clauses:
+        where_sql = " WHERE " + " AND ".join(where_clauses)
+
+    # --- Sorting ---
+    for s in sort:
+        if s.startswith("-"):
+            order_clauses.append(f"{s[1:]} DESC")
+        else:
+            order_clauses.append(f"{s} ASC")
+
+    order_sql = ""
+    if order_clauses:
+        order_sql = " ORDER BY " + ", ".join(order_clauses)
+
+    return where_sql + order_sql, params
 
 
 # ------------------------------------------------------------------------------
@@ -327,15 +379,28 @@ def handle_resource(resource: str, item_id: Optional[str] = None):
                 return json_error(404, "NotFound", f"{singular} not found.", details={"id": item_id})
             return jsonify({"type": ALLOWED_TYPES[resource], **obj, "request_id": _request_id()})
 
-        size_str = request.args.get("size")
-        start = request.args.get("start")
+        # -----------------------------
+        # Filtering and sorting support
+        # -----------------------------
+        filters = {}
+        sort = []
+
+        for key, val in request.args.items():
+            if key in ("start", "size"):
+                continue
+            elif key == "sort":
+                sort = [s.strip() for s in val.split(",") if s.strip()]
+            else:
+                filters[key] = val
+
         try:
-            size = int(size_str) if size_str is not None else None
-        except Exception:
+            size_str = request.args.get("size")
+            size = int(size_str) if size_str else 25
+        except ValueError:
             return json_error(400, "BadRequest", "Query parameter 'size' must be an integer.")
 
         try:
-            items, next_start = fetch_list(resource, start, size if size is not None else 25)
+            items, next_start = fetch_list(resource, request.args.get("start"), size, filters, sort)
         except ValueError as ve:
             return json_error(400, "BadRequest", str(ve), details={"max_size": MAX_PAGE_SIZE})
 
