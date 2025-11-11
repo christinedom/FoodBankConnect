@@ -105,32 +105,34 @@ const Home = () => {
                   </div>
 
                   {/* Original table layout for nav buttons restored */}
-                  <table id="nav-buttons">
-                    <tbody>
-                      <tr id="select-tr">
-                        <td>
-                          <Link to="/foodbanks" className={styles["food-banks-btn"]}>
-                            <strong>View Food Banks</strong>
-                          </Link>
-                        </td>
-                        <td>
-                          <Link to="/sponsors" className={styles["sponsors-btn"]}>
-                            <strong>View Sponsors</strong>
-                          </Link>
-                        </td>
-                        <td>
-                          <Link to="/programs" className={styles["programs-btn"]}>
-                            <strong>View Programs</strong>
-                          </Link>
-                        </td>
-                        <td>
-                          <Link to="/about" className={styles["about-btn"]}>
-                            <strong>About the Site</strong>
-                          </Link>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <div className={styles.tableWrapper}>
+                    <table id="nav-buttons">
+                      <tbody>
+                        <tr id="select-tr">
+                          <td>
+                            <Link to="/foodbanks" className={styles["food-banks-btn"]}>
+                              <strong>View Food Banks</strong>
+                            </Link>
+                          </td>
+                          <td>
+                            <Link to="/sponsors" className={styles["sponsors-btn"]}>
+                              <strong>View Sponsors</strong>
+                            </Link>
+                          </td>
+                          <td>
+                            <Link to="/programs" className={styles["programs-btn"]}>
+                              <strong>View Programs</strong>
+                            </Link>
+                          </td>
+                          <td>
+                            <Link to="/about" className={styles["about-btn"]}>
+                              <strong>About the Site</strong>
+                            </Link>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </td>
               </tr>
               <tr className={styles["scroll-tr"]}>

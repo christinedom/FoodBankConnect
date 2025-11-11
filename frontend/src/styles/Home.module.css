@@ -17,6 +17,11 @@
     color: white;
 }
 
+.tableWrapper table {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* Overlay */
 .overlay {
     position: fixed;
