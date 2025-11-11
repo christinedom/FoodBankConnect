@@ -53,7 +53,7 @@ const Programs = () => {
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = currentPage * itemsPerPage;
-  const displayedPrograms = programs.slice(startIndex, endIndex);
+  const displayedPrograms = filteredPrograms.slice(startIndex, endIndex);
   return (
     <div className="programs-page">
       <Navbar />
