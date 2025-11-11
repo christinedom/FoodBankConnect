@@ -19,7 +19,7 @@ const Foodbanks = () => {
       try {
         setLoading(true);
         const start = (currentPage - 1) * itemsPerPage + 1;
-        const response = await fetch(`${BASE_URL}?size=${itemsPerPage}&start=${start}`);
+        const response = await fetch(`${BASE_URL}?size=${totalItems}&start=${start}`);
         if (!response.ok) throw new Error("Failed to fetch food banks");
         const data = await response.json();
         setFoodbanks(data.items || []);
@@ -31,9 +31,13 @@ const Foodbanks = () => {
     };
 
     fetchFoodBanks();
-  }, [currentPage]);
+  }, []);
 
   if (loading) return <div>Loading...</div>;
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = currentPage * itemsPerPage;
+  const displayedFbs = foodbanks.slice(startIndex, endIndex);
 
   return (
     <div id="wrapper">
@@ -69,7 +73,7 @@ const Foodbanks = () => {
 
         {/* Foodbanks grid */}
         <div className="row g-4">
-          {foodbanks.map((bank) => (
+          {displayedFbs.map((bank) => (
             <div key={bank.id} className="col-md-4">
               <FoodbankCard
                 id={bank.id}

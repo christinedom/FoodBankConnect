@@ -39,7 +39,7 @@ const Sponsors = () => {
       try {
         setLoading(true);
         const start = (currentPage - 1) * itemsPerPage + 1;
-        const res = await fetch(`${BASE_URL}?size=${itemsPerPage}&start=${start}`);
+        const res = await fetch(`${BASE_URL}?size=${totalItems}&start=${start}`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setSponsors(data.items || []);
@@ -56,7 +56,7 @@ const Sponsors = () => {
     }
 
     fetchSponsors();
-  }, [currentPage]);
+  }, []);
 
   if (loading) {
     return (
@@ -66,6 +66,10 @@ const Sponsors = () => {
       </div>
     );
   }
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = currentPage * itemsPerPage;
+  const displayedSponsors = sponsors.slice(startIndex, endIndex);
 
   return (
     <div className="sponsors-page">
@@ -107,7 +111,7 @@ const Sponsors = () => {
 
         {/* Sponsor grid */}
         <div className="card-grid">
-          {sponsors.map((sponsor, idx) => (
+          {displayedSponsors.map((sponsor, idx) => (
             <SponsorCard
               key={idx}
               id={sponsor.id}

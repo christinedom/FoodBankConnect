@@ -23,7 +23,7 @@ const Programs = () => {
       try {
         setLoading(true);
         const start = (currentPage - 1) * itemsPerPage + 1;
-        const res = await fetch(`${BASE_URL}?size=${itemsPerPage}&start=${start}`);
+        const res = await fetch(`${BASE_URL}?size=${totalItems}&start=${start}`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setPrograms(data.items || []);
@@ -36,7 +36,7 @@ const Programs = () => {
     }
 
     fetchPrograms();
-  }, [currentPage]);
+  }, []);
 
   const filteredPrograms =
     filter === "all"
@@ -51,6 +51,9 @@ const Programs = () => {
 
   if (loading) return <div className="container my-5">Loading programs...</div>;
 
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = currentPage * itemsPerPage;
+  const displayedPrograms = programs.slice(startIndex, endIndex);
   return (
     <div className="programs-page">
       <Navbar />
@@ -112,7 +115,7 @@ const Programs = () => {
 
         {/* Program cards grid */}
         <div className="card-grid">
-          {filteredPrograms.map((program) => (
+          {displayedPrograms.map((program) => (
             <ProgramCard
               key={program.id}
               id={program.id}
