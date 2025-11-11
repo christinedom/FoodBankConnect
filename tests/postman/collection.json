@@ -48,6 +48,22 @@
         }
       }]
     },
+    {
+      "name": "GET /v1/search",
+      "request": { "method": "GET", "url": "{{BASE_URL}}/v1/search?q=food" },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "exec": [
+            "pm.test('200 OK', () => pm.response.code === 200);",
+            "const body = pm.response.json();",
+            "pm.test('has items array', () => Array.isArray(body.items));",
+            "pm.test('has query', () => typeof body.query === 'string');",
+            "pm.test('has request_id', () => typeof body.request_id === 'string');"
+          ]
+        }
+      }]
+    },
 
     {
       "name": "GET /v1/foodbanks/{id}",
