@@ -459,15 +459,24 @@ def search_all():
         return phrase_score + word_score
 
     def get_snippet(text: str) -> str:
-        """Return ~80 chars of surrounding text around the first match."""
+        """Return ~150 chars of surrounding text around the first match."""
         text_lower = text.lower()
+        # Try to find the query phrase first, then individual terms
+        idx = text_lower.find(q_lower)
+        if idx != -1:
+            start = max(0, idx - 60)
+            end = min(len(text), idx + len(q_lower) + 60)
+            return text[start:end]
+        # Fall back to first matching term
         for term in query_terms:
-            idx = text_lower.find(term)
-            if idx != -1:
-                start = max(0, idx - 40)
-                end = min(len(text), idx + 40)
-                return text[start:end]
-        return text[:80]
+            if len(term) > 2:  # Skip very short terms
+                idx = text_lower.find(term)
+                if idx != -1:
+                    start = max(0, idx - 60)
+                    end = min(len(text), idx + len(term) + 60)
+                    return text[start:end]
+        # If no match found, return beginning of text
+        return text[:150] if len(text) > 150 else text
 
     with engine.connect() as conn:
         for model in ALLOWED_TYPES.keys():
@@ -492,11 +501,17 @@ def search_all():
                     
                     score = relevance_score(text_blob)
                     if score > 0:
+                        # Use the original model name (lowercase) to match route paths
+                        model_name = model  # e.g., "foodbanks", "programs", "sponsors"
+                        snippet = get_snippet(text_blob)
+                        # Clean up snippet - remove extra whitespace and newlines
+                        snippet = " ".join(snippet.split())[:150]
+                        
                         results.append({
-                            "model": model.capitalize(),
+                            "model": model_name,  # lowercase to match routes
                             "id": row_dict.get("id", ""),
                             "name": row_dict.get("name") or "(Unnamed)",
-                            "snippet": get_snippet(text_blob),
+                            "snippet": snippet,
                             "score": score,
                         })
             except Exception as e:
