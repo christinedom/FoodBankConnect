@@ -129,7 +129,7 @@ https://foodbankconnect.me
 
 ## Phase Two
 - **Git SHA:**
-03016fba3e57a7901d59889e3b0110d7a9f205cb  
+  
 - **Project Leader: Francisco Vivas** 
   - Responsibilities: Delegating tasks to the group members and setting up the backend and database servers. 
 - **GitLab Pipelines:**
@@ -150,14 +150,14 @@ https://www.postman.com/downing-group-7/dafrancc-s-workspace/collection/uhwer5y/
 | Mahika Dawar      | 18              | 20           |  
 | Jose Lopez        | 20              | 19           |  
 
-**Comments:** Our pipeline failing is not indicative of us failing tests; we pass all of them. We just had some trouble with the .yml that was not able to be resolved, which is fine since all functionality remains intact.
+**Comments:** None
 
 ---  
 
 ## Phase Three
 - **Git SHA:**  
 - **Project Leader: Mahika Dawar**  
-  - Responsibilities: Dividing tasks between group members, implement searching/filtering, front end styling improvements, and the AI report 
+  - Responsibilities: Dividing tasks between group members, implement searching/filtering, front end styling improvements, and the AI report.
 - **GitLab Pipelines:**
 https://gitlab.com/OdinLimaye/cs373-fall-2025-55085_07/-/pipelines  
 - **Backend API Link:**
@@ -173,7 +173,7 @@ https://www.postman.com/downing-group-7/dafrancc-s-workspace/collection/uhwer5y/
 | Odin Limaye       | 16              |              |  
 | Francisco Vivas   |                 |              |  
 | Christine Dominic |                 |              |  
-| Mahika Dawar      |  15             |              |  
+| Mahika Dawar      | 15              |              |  
 | Jose Lopez        |                 |              |  
 
 **Comments:**  

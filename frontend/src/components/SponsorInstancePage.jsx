@@ -6,9 +6,6 @@ import Footer from "./Footer";
 import Breadcrumb from "./Breadcrumb";
 import styles from "../styles/Sponsors.module.css";
 
-// Paths to scraper JSON files
-import sponsorsData from "../data/sponsors.json";
-
 const SponsorInstancePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -27,15 +24,7 @@ const SponsorInstancePage = () => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
-        // Lookup image and sponsor_link from the scraper JSON
-        const lookup = sponsorsData.find(
-          (s) => s.EIN === data.ein || s.name === data.name
-        );
-        if (lookup) {
-          data.image = lookup.image || data.image;
-          data.sponsor_link = lookup.sponsor_link || data.sponsor_link;
-        }
-
+        // Use only API data, no local JSON
         setSponsor(data);
       } catch (err) {
         console.error("Error fetching sponsor:", err);

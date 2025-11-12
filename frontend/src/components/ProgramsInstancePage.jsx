@@ -4,7 +4,6 @@ import Navbar from "./Navbar";
 import Header from "./Header";
 import Footer from "./Footer";
 import Breadcrumb from "./Breadcrumb";
-import programsData from "../data/programs.json";
 
 const BASE_URL = "https://api.foodbankconnect.me/v1/programs";
 const FOODBANKS_URL = "https://api.foodbankconnect.me/v1/foodbanks?size=100&start=1";
@@ -28,16 +27,6 @@ const ProgramsInstancePage = () => {
         const res = await fetch(`${BASE_URL}/${id}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const programData = await res.json();
-
-        // Lookup image and sign_up_link from programs.json
-        const lookup = programsData.find(
-          (p) => p.name === programData.name || p.host === programData.host
-        );
-        if (lookup) {
-          programData.image = lookup.image || programData.image;
-          programData.sign_up_link = lookup.sign_up_link || programData.sign_up_link;
-        }
-
         setProgram(programData);
 
         if (programData.host) {
@@ -111,7 +100,7 @@ const ProgramsInstancePage = () => {
             <h3 className="fw-bold mb-4">Program Details</h3>
             <ul className="list-unstyled">
               <li><strong>Frequency:</strong> {program.frequency || "N/A"}</li>
-              <li><strong>Eligibility:</strong> Everybody</li>
+              <li><strong>Eligibility:</strong> {program.eligibility || "Everybody"}</li>
               <li><strong>Cost:</strong> {program.cost || "N/A"}</li>
               <li>
                 <strong>Host:</strong>{" "}

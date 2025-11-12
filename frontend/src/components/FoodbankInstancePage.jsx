@@ -5,9 +5,6 @@ import Header from "./Header";
 import Footer from "./Footer";
 import Breadcrumb from "./Breadcrumb";
 
-// Import local JSON from scraper
-import foodbanksData from "../data/foodbanks.json";
-
 const FOODBANKS_URL = "https://api.foodbankconnect.me/v1/foodbanks";
 const PROGRAMS_URL = "https://api.foodbankconnect.me/v1/programs?size=100&start=1";
 
@@ -33,16 +30,6 @@ const FoodbankInstancePage = () => {
         const response = await fetch(`${FOODBANKS_URL}/${id}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-
-        // Lookup image and website from foodbanks.json
-        const lookup = foodbanksData.find(
-          (fb) => fb.name === data.name || fb.id === id
-        );
-        if (lookup) {
-          data.image = lookup.image || data.image;
-          data.website = lookup.website || data.website;
-        }
-
         setFoodbank(data);
       } catch (err) {
         console.error("Error fetching food bank:", err);
@@ -127,11 +114,11 @@ const FoodbankInstancePage = () => {
           )}
         </section>
 
+        {/* Details section */}
         <section className="mb-4">
           <h2>Details</h2>
           <ul style={{ listStyle: "none", padding: 0 }}>
             <li><strong>Name:</strong> {foodbank.name || "N/A"}</li>
-            <li><strong>About:</strong> {foodbank.about || "N/A"}</li>
             <li>
               <strong>Website:</strong>{" "}
               {foodbank.website ? (
@@ -148,6 +135,12 @@ const FoodbankInstancePage = () => {
             <li><strong>Languages:</strong> {foodbank.languages?.join(", ") || "N/A"}</li>
             <li><strong>Services:</strong> {foodbank.services?.join(", ") || "N/A"}</li>
           </ul>
+        </section>
+
+        {/* About section (new) */}
+        <section className="mb-5">
+          <h2>About</h2>
+          <p>{foodbank.about || "No description available."}</p>
         </section>
 
         {/* Linked Programs Section */}
