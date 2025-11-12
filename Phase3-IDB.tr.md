@@ -14,7 +14,7 @@ This site helps solve the problem that many low-income and underserved communiti
 ## 2. User Stories
 
 - **Story 1:**  
-  Our customer group suggested having an option to filter/sort foodbanks by their urgency level. We had actually already implemented this by the time the user story came in since we have filtering for each model page. And, one of the filtering options was over the instance attribute "urgency" for foodbanks, so this ended up answering their request impicitly. 
+  Our customer group suggested having an option to filter/sort foodbanks by their urgency level. We had actually already implemented this by the time the user story came in since we have filtering for each model page. And, one of the filtering options was over the instance attribute "urgency" for foodbanks, so this ended up answering their request implicitly. 
   Estimated Time: N/A
   Actual Time: N/A
 
@@ -30,7 +30,7 @@ This site helps solve the problem that many low-income and underserved communiti
 
 - **Story 4:**  
   Our customer group noticed that the instance cards in our Foodbanks and Sponsors model pages were not easily distinguishable from one another since there were no borders between the cards. We fixed this by adding in light borders between the instances to make the card-like nature of the instances more readily apparent.
-  Esimated Time: 5 minutes
+  Estimated Time: 5 minutes
   Actual Time: 5 minutes
 
 - **Story 5:**  
@@ -90,18 +90,10 @@ This site helps solve the problem that many low-income and underserved communiti
    * Example: `https://api.foodbankconnect.me/v1/sponsors/123`
 
 **Searching**
-(Fill in endpoint parameters)
-
-```json
-Fill in example
-```
+(Fill in)
 
 **Filtering**
-(Fill in endpoint parameters)
-
-```json
-Fill in example
-```
+(Fill in)
 
 
 ---
@@ -132,26 +124,20 @@ Fill in example
 
 ---
 
-## 6. Architecture
+## 6. Frontend
 
-So far, our site's overall architecture is a hierarchical file structure containing relevant subdirectories for each model. We have a Splash page (index.html) that links to all of the model pages as well as the Postman API and the about page (about.html). The splash/home page contains a slideshow running through various instance pages, and each webpage contains a navigation bar containing links to the home page, each model page, and the about page.
-
-The front-end framework we used was Bootstrap. We used Bootstrap to obtain convenient CSS structures and formatting that we use on every single web page. We do not have a back-end framework yet since this is just phase one.
-
-Instance pages contain relevant links to other instance pages of the same model as well as links to their respective parent model pages. Instance pages contain many forms of media, particularly links to official webpages and maps. There are also images in order to immediately familiarize viewers with the instance in question.
-
-The about page runs a JavaScript file that dynamically retrieves the number of commits, issues created, and issues closed of each team member. It does so by using the GitLab API to access all of the repo's commits and issues, and then it tallies up the representatives in these categories for each team member. GitLab offers a query of issues opened by specific authors, but the other two categories do not have such queries. So, manual filtering by authors' GitLab IDs and by authors' emails is performed in the JavaScript file to complete this task.
+The frontend of our site uses React. We have our landing page, about page, and then our three model pages as static (always existent) pages to which React routes service. The about page is populated with data in regards to our commits and issues from a small JavaScript program that calls GitLab's API to get information about our repository and our team members. The model pages present grid-based layouts of all of the cards/instances present for that model. This information is retrieved using the range-based GET endpoint of our API. The instance pages themselves, which number in the hundreds, are created and routed through React dynamically and are populated with attributes and media by calling the ID-based GET endpoint of our API.
 
 ---
 
 ## 7. Toolchains & Development Workflow
 
-- **Languages:** HTML, JavaScript, CSS, and Make
-- **Frameworks:** Bootstrap CSS
-- **Libraries:** We made use of the Bootstrap public library for CSS objects and formatting.
-- **Build tools:** We have a Makefile that condenses pushing and pulling, a .yml that runs pipelines to upload our source files to the AWS hosting site automatically, and a .gitignore that keeps our working space clean and free from clutter.
-- **Testing tools:** Currently, our Postman API is set up to be able to test our API once it is implemented, which will happen in phase 2.
-- **Version control:** We made use of GitLab for source control. We have a GitLab project/repository that contains the most up-to-date version of our site as well as all of our source code and media files.
+- **Languages:** HTML, JavaScript, CSS, Python, JSX, Docker, and Make
+- **Frameworks:** Bootstrap CSS, Flask, and PostgreSQL
+- **Libraries:** We made use of the Bootstrap public library for CSS objects and formatting as well as the BeautifulSoup Python library for web scraping.
+- **Build tools:** We have a Makefile that condenses pushing and pulling, a .yml that runs pipelines to upload our source files to the AWS hosting site and run tests automatically, various Dockerfiles to maintain our Docker images for each part of the website, and a .gitignore that keeps our working space clean and free from clutter.
+- **Testing tools:** Our .yml runs all of our tests automatically. We have backend tests using Pytest and Postman as well as Frontend tests using Selenium and Jest.
+- **Version control:** We made use of GitLab for source control. We have a GitLab project/repository that contains the most up-to-date version of our site as well as all of our source code and media files. We occasionally forked the repository to preserve the website's state for grading purposes.
 
 ---
 
@@ -160,33 +146,32 @@ The about page runs a JavaScript file that dynamically retrieves the number of c
 We obtained our domain name from Namecheap.com, where we currently redirect our domain name and its www subdomain to our account on Amazon Web Services' CloudFront hosting service. On Namecheap, we also have records for each of the two domains (www and non-www) in order to validate our SSL certificate, which gives our URL HTTPS access instead of HTTP access. The hosting of our site occurs on Amazon Web Services where we have an S3 bucket set up for static website hosting, which is handled by CloudFront. CloudFront is also the platform we used to obtain our SSL
 certificate.
 
-We have a .yml file set up to automatically upload the public subdirectory of our repository upon pushes to the main branch of our GitLab repository. The mapping from our public folder to the S3 bucket is one-to-one; their contents are identical. To allow for this, we have GitLab listed as an IAM on our AWS account, and we have the relevant keys stored in our GitLab repo's environment variables. We also have a Makefile that performs basic operations relating to pushing and pulling from the repository. Our .gitignore currently just ignores instances of the Git log text file, but we foresee it being used on a larger scale in future phases.
-
-Our deployment, which is quite simple for phase one due to being entirely static, is handled entirely by GitLab's CI pipeline upon pushes to the main branch. After the pipeline runs successfully, the public subdomain is uploaded to the S3 bucket, and CloudFront's cache is cleared so that the new files can come into effect immediately.
+We have a .yml file set up to automatically upload the build files that React produces upon deployment as well as run our tests. We have GitLab listed as an IAM on our AWS account, and we have the relevant keys stored in our GitLab repo's environment variables. We also have a Makefile that performs basic operations relating to pushing and pulling from the repository. Our .gitignore currently just ignores instances of the Git log text file and various temporary debugging files that popped up throughout our development of the site.
 
 ---
 
 ## 9. Challenges & Solutions
 
-**Challenge 1:** (Fill in challenge)
+**Challenge:** Google's Custom Search API kept returning error codes when the scrapers were run.
 
-- (Fill in resolution)
-
-**Challenge 2:** (Fill in challenge)
-
-- (Fill in resolution)
+- After doing some research and debugging, we discovered that the issue was that we were making more requests per minute than is allowed by Google's threshold. We were well within Google's overall daily limit of 10,000 requests, which added to our confusion since we were seemingly well within the safe range. But, after discovering that the issue was the per-minute limit, we added in small sleep's between Google API calls in order to prevent the API from being overloaded. We also learned a bit more about how Google API returns its data, which allowed us to reduce redundant calls per instance into just one call that produced all of the necessary results.
 
 ---
 
 ## 10. Database and Scraping
 
+For the database, (Fill in)
+
+For the web scraping, we predominantly used ProPublica's API as a jumping-off point for more in-depth scraping for each instance. We used ProPublica to get the names of all of the foodbanks, programs, and charitable organizations. Then, we made use of Google's Custom Search API to query specifically about an individua instance. We then used the BeautifulSoup library to parse through a specific instance's website, checking for the existence of the /about and /aboutus subdomains in order to obtain descriptive text. Based on certain keywords, we inferred the type of programs, type of organization, urgency of foodbank, etc. and populated the corresponding JSON fields.
 
 ---
 
 ## 11. Paging
 
+(Fill in)
 
 ---
 
 ## 12. Filtering and Searching
 
+(Fill in)
