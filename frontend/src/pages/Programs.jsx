@@ -90,7 +90,7 @@ const Programs = () => {
         {/* Top info and pagination */}
         <div className="d-flex justify-content-between align-items-center mb-3">
           <p className="mb-0">
-            Showing {itemsPerPage} / 100 programs
+            Showing {`${startIndex + 1} - ${startIndex + displayedPrograms.length}`} / {filteredPrograms.length} programs
           </p>
           <div>
             <button
