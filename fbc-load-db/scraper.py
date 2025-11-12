@@ -42,7 +42,7 @@ except Exception:
 MAX_WORKERS = int(os.environ.get("SCRAPER_MAX_WORKERS", DEFAULT_WORKERS))
 
 # Per-task timeout (seconds)
-SCRAPER_TIMEOUT_SECS = float(os.environ.get("SCRAPER_TIMEOUT_SECS", "300"))
+SCRAPER_TIMEOUT_SECS = float(os.environ.get("SCRAPER_TIMEOUT_SECS", "1000"))
 
 # ----------------------------------------------------------------------------
 # Helpers
