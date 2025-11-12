@@ -3,6 +3,7 @@ stages:
   - deploy
   - backend_release
   - backend_test
+  - postman_tests
   - selenium_tests
   - jest_tests
 
@@ -155,6 +156,30 @@ backend_release:
     - if: '$CI_COMMIT_TAG'
       when: on_success
     - when: never
+
+postman_tests:
+  stage: postman_tests
+  image: node:20-bullseye
+  before_script:
+    - npm install -g newman newman-reporter-junitfull
+  script:
+    - >
+      newman run "$POSTMAN_COLLECTION"
+      --reporters cli,junitfull
+      --reporter-junitfull-export "$NEWMAN_JUNIT_XML"
+      --env-var "url=http://localhost:8080"  # Override your {{url}} variable
+  artifacts:
+    when: always
+    reports:
+      junit: "$NEWMAN_JUNIT_XML"
+    paths:
+      - "$NEWMAN_JUNIT_XML"
+  rules:
+    - changes:
+        - tests/postman/**/*
+      when: on_success
+    - when: never
+
 
 selenium_tests:
   stage: selenium_tests
