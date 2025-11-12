@@ -15,7 +15,7 @@ const Programs = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const itemsPerPage = 20;
-  const totalItems = 100; // Hardcoded total
+  const totalItems = 98; // Hardcoded total
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   useEffect(() => {
