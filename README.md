@@ -129,7 +129,7 @@ https://foodbankconnect.me
 
 ## Phase Two
 - **Git SHA:**
-884ced324ec4ac1f00f86f03730be81272554dad
+b7c5a82b3269088fc56aac2129c680a560645d69
 - **Project Leader: Francisco Vivas** 
   - Responsibilities: Delegating tasks to the group members and setting up the backend and database servers. 
 - **GitLab Pipelines:**
