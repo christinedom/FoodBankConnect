@@ -105,7 +105,7 @@ const SponsorInstancePage = () => {
               </a>
             </li>
             <li><strong>Media / Logo Alt:</strong> {sponsor.alt}</li>
-            <li><strong>Employee Identification Number:</strong> {sponsor.ein}</li>
+            <li><strong>Employee Identification Number:</strong> {sponsor.EIN}</li>
           </ul>
         </section>
 
