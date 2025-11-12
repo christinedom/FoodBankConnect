@@ -112,20 +112,16 @@ const Sponsors = () => {
         {/* Sponsor grid */}
         <div className="card-grid">
           {displayedSponsors.map((sponsor, idx) => (
-            <div
+            <SponsorCard
               key={idx}
-              className="border rounded p-2"
-            >
-              <SponsorCard
-                id={sponsor.id}
-                sponsor_img={sponsor.image}
-                sponsor_alt={sponsor.alt || sponsor.name + " Logo"}
-                name={sponsor.name}
-                affiliation={sponsor.affiliation}
-                city={sponsor.city}
-                state={sponsor.state}
-              />
-            </div>
+              id={sponsor.id}
+              sponsor_img={sponsor.image}
+              sponsor_alt={sponsor.alt || sponsor.name + " Logo"}
+              name={sponsor.name}
+              affiliation={sponsor.affiliation}
+              city={sponsor.city}
+              state={sponsor.state}
+            />
           ))}
         </div>
 

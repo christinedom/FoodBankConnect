@@ -12,35 +12,68 @@ const SponsorInstancePage = () => {
   const { id } = location.state || {};
   const [sponsor, setSponsor] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [foodbanks, setFoodbanks] = useState([]);
+  const [programs, setPrograms] = useState([]);
 
   useEffect(() => {
-    const fetchSponsor = async () => {
+    const fetchSponsorData = async () => {
       if (!id) {
         setLoading(false);
         return;
       }
-      try {
-        const res = await fetch(`https://api.foodbankconnect.me/v1/sponsors/${id}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
 
-        // Use only API data, no local JSON
-        setSponsor(data);
+      try {
+        // Fetch sponsor info
+        const sponsorRes = await fetch(`https://api.foodbankconnect.me/v1/sponsors/${id}`);
+        if (!sponsorRes.ok) throw new Error(`HTTP ${sponsorRes.status}`);
+        const sponsorData = await sponsorRes.json();
+        setSponsor(sponsorData);
+
+        // Fetch all foodbanks
+        const fbRes = await fetch(`https://api.foodbankconnect.me/v1/foodbanks?size=100&start=1`);
+        if (!fbRes.ok) throw new Error(`HTTP ${fbRes.status}`);
+        const fbData = await fbRes.json();
+        const fbItems = fbData.items || [];
+
+        // Pick two foodbanks: ID-1 and ID-2 (or next if ID=1)
+        const currentId = parseInt(id, 10);
+        const fbLinks = [];
+        const fbPrev = fbItems.find(fb => fb.id === (currentId > 1 ? currentId - 1 : currentId + 1));
+        const fbPrev2 = fbItems.find(fb => fb.id === (currentId > 2 ? currentId - 2 : currentId + 2));
+        if (fbPrev) fbLinks.push(fbPrev);
+        if (fbPrev2) fbLinks.push(fbPrev2);
+        setFoodbanks(fbLinks);
+
+        // Fetch all programs
+        const progRes = await fetch(`https://api.foodbankconnect.me/v1/programs?size=100&start=1`);
+        if (!progRes.ok) throw new Error(`HTTP ${progRes.status}`);
+        const progData = await progRes.json();
+        const progItems = progData.items || [];
+
+        // Pick two programs: ID-1 and ID-2 (same logic)
+        const progLinks = [];
+        const progPrev = progItems.find(p => p.id === (currentId > 1 ? currentId - 1 : currentId + 1));
+        const progPrev2 = progItems.find(p => p.id === (currentId > 2 ? currentId - 2 : currentId + 2));
+        if (progPrev) progLinks.push(progPrev);
+        if (progPrev2) progLinks.push(progPrev2);
+        setPrograms(progLinks);
+
       } catch (err) {
-        console.error("Error fetching sponsor:", err);
+        console.error("Error fetching sponsor or related data:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchSponsor();
+
+    fetchSponsorData();
   }, [id]);
 
-  const handleNavigate = (type) => {
-    if (!sponsor?.id) return;
+  const handleNavigate = (type, target) => {
+    if (!target) return;
     if (type === "foodbank") {
-      navigate(`/foodbanks/${sponsor.id}`, { state: { id: sponsor.id, name: sponsor.name } });
+      navigate(`/foodbanks/${encodeURIComponent(target.name)}`, { state: { id: target.id, name: target.name } });
     } else if (type === "program") {
-      navigate(`/programs/${sponsor.id}`, { state: { id: sponsor.id, name: sponsor.name } });
+      navigate(`/programs/${encodeURIComponent(target.name)}`, { state: { id: target.id, name: target.name } });
     }
   };
 
@@ -62,7 +95,7 @@ const SponsorInstancePage = () => {
           )}
         </div>
 
-        {/* About Section (centered) */}
+        {/* About Section */}
         <section className={`mb-4 text-center ${styles.about}`}>
           <h2>About</h2>
           <p>{sponsor.about}</p>
@@ -77,26 +110,26 @@ const SponsorInstancePage = () => {
             <li><strong>City:</strong> {sponsor.city}</li>
             <li><strong>State:</strong> {sponsor.state}</li>
             <li>
-              <strong>Past Involvement:</strong>{" "}
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleNavigate("foodbank");
-                }}
-              >
-                View Related Foodbank
-              </a>{" "}
-              |{" "}
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleNavigate("program");
-                }}
-              >
-                View Related Program
-              </a>
+              <strong>Related Foodbanks:</strong>{" "}
+              {foodbanks.map((fb, idx) => (
+                <span key={fb.id}>
+                  <a href="#" onClick={(e) => { e.preventDefault(); handleNavigate("foodbank", fb); }}>
+                    {fb.name}
+                  </a>
+                  {idx < foodbanks.length - 1 && " | "}
+                </span>
+              ))}
+            </li>
+            <li>
+              <strong>Related Programs:</strong>{" "}
+              {programs.map((p, idx) => (
+                <span key={p.id}>
+                  <a href="#" onClick={(e) => { e.preventDefault(); handleNavigate("program", p); }}>
+                    {p.name}
+                  </a>
+                  {idx < programs.length - 1 && " | "}
+                </span>
+              ))}
             </li>
             <li style={{ marginTop: "25px" }}>
               <strong>Website:</strong>{" "}

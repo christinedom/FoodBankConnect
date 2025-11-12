@@ -1,4 +1,4 @@
- import "../styles/Programs.css";
+import "../styles/Programs.css";
 import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Header from "../components/Header";
@@ -54,6 +54,7 @@ const Programs = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = currentPage * itemsPerPage;
   const displayedPrograms = filteredPrograms.slice(startIndex, endIndex);
+
   return (
     <div className="programs-page">
       <Navbar />
@@ -89,9 +90,7 @@ const Programs = () => {
       <main className="container my-5">
         {/* Top info and pagination */}
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <p className="mb-0">
-            Showing {itemsPerPage} / 100 programs
-          </p>
+          <p className="mb-0">Showing {itemsPerPage} / 100 programs</p>
           <div>
             <button
               className="btn btn-primary me-2"
@@ -116,18 +115,19 @@ const Programs = () => {
         {/* Program cards grid */}
         <div className="card-grid">
           {displayedPrograms.map((program) => (
-            <ProgramCard
-              key={program.id}
-              id={program.id}
-              name={program.name}
-              program_type={program.program_type}
-              freq={program.frequency}
-              host={program.host}
-            />
+            <div key={program.id} className="border rounded p-2 mb-3">
+              <ProgramCard
+                id={program.id}
+                name={program.name}
+                program_type={program.program_type}
+                freq={program.frequency}
+                host={program.host}
+              />
+            </div>
           ))}
         </div>
 
-        {/* Bottom pagination (optional) */}
+        {/* Bottom pagination */}
         <div className="d-flex justify-content-center align-items-center mt-4">
           <button
             className="btn btn-primary me-2"
@@ -154,4 +154,4 @@ const Programs = () => {
   );
 };
 
-export default Programs; 
+export default Programs;
