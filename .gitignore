@@ -7,3 +7,6 @@ donors.json
 __pycache__
 fbc-load-db/scrapers/debug_output.json
 fbc-load-db/scrapers/sponsor_debug_output.json
+.env
+.gitlab-ci-local/
+.idea/

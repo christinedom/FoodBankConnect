@@ -1,25 +1,9 @@
+#!/usr/bin/env python3
 # ============================================================================
 #  © 2025 Francisco Vivas Puerto (aka “DaFrancc”)
 #  All rights reserved. This file is part of the FoodBankConnect tooling.
 #  You may use and distribute with proper attribution to the author.
 # ============================================================================
-
-"""
-Concurrent scraper runner.
-
-Responsibilities:
-- Read `scrapers.txt` for a list of scraper file names
-- Dynamically import and run each scraper's `scrape()` function
-- Handle both sync and async scrapers gracefully
-- Run all scrapers concurrently using a thread pool
-- Collect and return a flat list of dictionaries
-
-Environment variables:
-- SCRAPERS_DIR (default: /app/scrapers)
-- SCRAPER_MAX_WORKERS (default: max(CPU count, 8))
-
-Written by: Francisco Vivas Puerto (“DaFrancc”)
-"""
 
 from __future__ import annotations
 
@@ -30,11 +14,12 @@ import logging
 import pathlib
 import traceback
 import importlib.util
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Callable, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import asyncio
 import inspect
+import queue
 
 # ----------------------------------------------------------------------------
 # Logging
@@ -56,13 +41,15 @@ except Exception:
     DEFAULT_WORKERS = 8
 MAX_WORKERS = int(os.environ.get("SCRAPER_MAX_WORKERS", DEFAULT_WORKERS))
 
+# Per-task timeout (seconds)
+SCRAPER_TIMEOUT_SECS = float(os.environ.get("SCRAPER_TIMEOUT_SECS", "300"))
+
 # ----------------------------------------------------------------------------
 # Helpers
 # ----------------------------------------------------------------------------
 def _read_list_file(path: pathlib.Path) -> List[pathlib.Path]:
     """
     Read `scrapers.txt` and return absolute paths of valid `.py` scraper files.
-
     - Ignores blank lines and comment lines starting with '#'
     - Supports absolute or relative paths (relative to SCRAPERS_DIR)
     - Logs warnings for invalid lines
@@ -79,10 +66,7 @@ def _read_list_file(path: pathlib.Path) -> List[pathlib.Path]:
         if not line or line.startswith("#"):
             continue
 
-        # Resolve to absolute path
         fpath = (SCRAPERS_DIR / line).resolve() if not pathlib.Path(line).is_absolute() else pathlib.Path(line)
-
-        # Validate .py file existence
         if not (fpath.exists() and fpath.suffix == ".py"):
             print(f"[scraper] Line {i}: '{line}' is not a valid .py in {SCRAPERS_DIR} (skipping)", file=sys.stderr)
             log.error("Line %d invalid: %s", i, fpath)
@@ -94,7 +78,6 @@ def _read_list_file(path: pathlib.Path) -> List[pathlib.Path]:
 def _load_module(pyfile: pathlib.Path):
     """
     Dynamically import a Python file as a module with a unique name.
-
     This prevents namespace collisions when loading multiple scrapers.
     """
     mod_name = f"scraper_file_{pyfile.stem}_{abs(hash(str(pyfile)))}"
@@ -106,20 +89,43 @@ def _load_module(pyfile: pathlib.Path):
     return mod
 
 
+def _call_with_timeout(fn: Callable[[], Any], timeout_s: float) -> Any:
+    """
+    Run a callable in a helper thread with a timeout.
+    Returns the callable's result or raises TimeoutError if it doesn't finish.
+    """
+    q: "queue.Queue[tuple[bool, Any]]" = queue.Queue(maxsize=1)
+
+    def runner() -> None:
+        try:
+            q.put((True, fn()))
+        except BaseException as e:
+            q.put((False, e))
+
+    t = threading.Thread(target=runner, daemon=True)
+    t.start()
+    try:
+        ok, val = q.get(timeout=timeout_s)
+    except queue.Empty:
+        raise TimeoutError(f"no progress within {timeout_s:.1f}s")
+    if ok:
+        return val
+    raise val  # re-raise exception from worker
+
+# ----------------------------------------------------------------------------
+# Core runner for a single scraper (with timeout + robust error handling)
+# ----------------------------------------------------------------------------
 def _run_one(pyfile: pathlib.Path) -> List[Dict[str, Any]]:
     """
     Execute a single scraper and return a list of dictionaries.
-
-    Behavior:
-    - Print START/FINISH lines with timing
-    - Handle both sync and async scrape()
-    - Skip non-dict items gracefully
-    - Return [] on failure (never raises)
+    - Logs START/FINISH and elapsed time
+    - Supports sync and async scrape()
+    - Enforces a timeout via SCRAPER_TIMEOUT_SECS
+    - Gracefully returns [] on error or timeout (does not raise)
     """
-    start = time.perf_counter()
+    started = time.perf_counter()
     print(f"[scraper] START  {pyfile.name}")
     try:
-        # Load module dynamically
         mod = _load_module(pyfile)
         fn = getattr(mod, "scrape", None)
 
@@ -127,22 +133,22 @@ def _run_one(pyfile: pathlib.Path) -> List[Dict[str, Any]]:
             print(f"[scraper] ERROR  {pyfile.name}: no top-level scrape()", file=sys.stderr)
             return []
 
-        # Handle async or accidentally awaitable sync results
-        if inspect.iscoroutinefunction(fn):
-            data = asyncio.run(fn())
-        else:
-            data = fn()
-            if inspect.isawaitable(data):
-                data = asyncio.run(data)
+        def call_sync() -> Any:
+            if inspect.iscoroutinefunction(fn):
+                return asyncio.run(asyncio.wait_for(fn(), timeout=SCRAPER_TIMEOUT_SECS))
+            result = fn()
+            if inspect.isawaitable(result):
+                return asyncio.run(asyncio.wait_for(result, timeout=SCRAPER_TIMEOUT_SECS))
+            return result
+
+        data = _call_with_timeout(call_sync, SCRAPER_TIMEOUT_SECS)
 
         if data is None:
             data = []
-
         if not isinstance(data, list):
             print(f"[scraper] ERROR  {pyfile.name}: scrape() returned {type(data).__name__}, expected list -> []", file=sys.stderr)
             return []
 
-        # Validate each item is a dict
         valid: List[Dict[str, Any]] = []
         for idx, item in enumerate(data, start=1):
             if isinstance(item, dict):
@@ -151,14 +157,14 @@ def _run_one(pyfile: pathlib.Path) -> List[Dict[str, Any]]:
                 print(f"[scraper] WARN   {pyfile.name}: item #{idx} is {type(item).__name__}, skipping", file=sys.stderr)
         return valid
 
+    except TimeoutError as te:
+        print(f"[scraper] TIMEOUT {pyfile.name}: {te}", file=sys.stderr)
+        return []
     except Exception:
-        # Full traceback for debugging
         print(f"[scraper] ERROR  {pyfile.name} failed:\n{traceback.format_exc()}", file=sys.stderr)
         return []
-
     finally:
-        # Log elapsed time
-        dur = time.perf_counter() - start
+        dur = time.perf_counter() - started
         print(f"[scraper] FINISH {pyfile.name} in {dur:.2f}s")
 
 # ----------------------------------------------------------------------------
@@ -167,11 +173,8 @@ def _run_one(pyfile: pathlib.Path) -> List[Dict[str, Any]]:
 def scrape() -> List[Dict[str, Any]]:
     """
     Run all scrapers listed in `scrapers.txt` concurrently.
-
-    Returns:
-        List[Dict[str, Any]]: A flat list of all valid rows from all scrapers.
+    Returns a flat list of all valid rows; failures/timeouts yield [] for that task.
     """
-    # Discover scripts
     files = _read_list_file(LIST_FILE)
     if not files:
         print(f"[scraper] No scrapers to run (empty or missing {LIST_FILE}).")
@@ -181,11 +184,10 @@ def scrape() -> List[Dict[str, Any]]:
     print(f"[scraper] Running up to {MAX_WORKERS} in parallel ...")
 
     results: List[Dict[str, Any]] = []
-    lock = threading.Lock()  # Protect shared list
+    lock = threading.Lock()
 
     try:
         start_all = time.perf_counter()
-        # Thread pool for concurrent scraping
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
             future_map = {ex.submit(_run_one, f): f for f in files}
             for fut in as_completed(future_map):
@@ -195,7 +197,6 @@ def scrape() -> List[Dict[str, Any]]:
                 except Exception:
                     print(f"[scraper] ERROR  Unexpected crash in future for {pyfile.name}:\n{traceback.format_exc()}", file=sys.stderr)
                     rows = []
-                # Append results safely
                 with lock:
                     if rows:
                         results.extend(rows)
@@ -205,6 +206,5 @@ def scrape() -> List[Dict[str, Any]]:
         return results
 
     except Exception:
-        # Never raise — return what we have
         print(f"[scraper] FATAL unexpected error; returning partial results ({len(results)} items)\n{traceback.format_exc()}", file=sys.stderr)
         return results
