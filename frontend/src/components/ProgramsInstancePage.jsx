@@ -167,12 +167,35 @@ const ProgramInstancePage = () => {
             <li><strong>Name:</strong> {program.name || "N/A"}</li>
             <li><strong>Frequency:</strong> {program.frequency || "N/A"}</li>
             <li><strong>Eligibility:</strong> {program.eligibility || "N/A"}</li>
+            <li>
+              <strong>Host:</strong>{" "}
+              {program.host ? (
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // Navigate to the host foodbank page
+                    const hostFoodbank = foodbanks.find(fb => fb.name === program.host);
+                    if (hostFoodbank) {
+                      navigate(`/foodbanks/${encodeURIComponent(hostFoodbank.name)}`, {
+                        state: { id: hostFoodbank.id, name: hostFoodbank.name },
+                      });
+                    }
+                  }}
+                >
+                  {program.host}
+                </a>
+              ) : (
+                "N/A"
+              )}
+            </li>
+            <li><strong>Program Type:</strong> {program.program_type || "N/A"}</li>
             <li><strong>Cost:</strong> {program.cost || "N/A"}</li>
             <li>
-              <strong>Website:</strong>{" "}
+              <strong>Sign Up Link:</strong>{" "}
               {program.sign_up_link ? (
                 <a href={program.sign_up_link} target="_blank" rel="noreferrer">
-                  Link
+                  Website
                 </a>
               ) : (
                 "N/A"
