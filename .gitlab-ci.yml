@@ -152,10 +152,15 @@ backend_release:
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - fbc-rest-api/**/*
       when: on_success
     - if: '$CI_COMMIT_TAG'
+      changes:
+        - fbc-rest-api/**/*
       when: on_success
     - when: never
+
 
 backend_unit_tests:
   stage: backend_test
@@ -253,12 +258,13 @@ jest_tests:
     - npm ci
     - npm test -- --watchAll=false
   rules:
-    - changes:
-        - frontend/src/__tests__/**/*
-        - frontend/package.json
-        - frontend/package-lock.json
-      when: on_success
     - when: never
+    #- changes:
+    #    - frontend/src/__tests__/**/*
+    #    - frontend/package.json
+    #    - frontend/package-lock.json
+    #  when: on_success
+    #- when: never
 
 # ------------------------------
 # DB apply: run your loader directly (no Docker-in-Docker, no ECR/Batch)
