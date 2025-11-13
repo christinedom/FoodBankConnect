@@ -42,7 +42,7 @@ const ProgramInstancePage = () => {
     fetchProgramDetails();
   }, [id]);
 
-  // Fetch related foodbanks (same logic as foodbank page’s programs)
+  // Fetch related foodbanks (take current and next)
   useEffect(() => {
     const fetchFoodbanks = async () => {
       try {
@@ -50,8 +50,29 @@ const ProgramInstancePage = () => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const allFoodbanks = (await response.json()).items || [];
 
-        // Guarantee exactly 2 foodbanks
-        let finalFoodbanks = allFoodbanks.slice(0, 2);
+        // Find current index
+        const currentIndex = allFoodbanks.findIndex(fb => fb.id === program?.id);
+        let finalFoodbanks = [];
+
+        if (currentIndex >= 0) {
+          finalFoodbanks.push(allFoodbanks[currentIndex]);
+          if (currentIndex + 1 < allFoodbanks.length) {
+            finalFoodbanks.push(allFoodbanks[currentIndex + 1]);
+          } else if (currentIndex > 0) {
+            finalFoodbanks.push(allFoodbanks[currentIndex - 1]);
+          }
+        }
+
+        // Fallback if not found
+        if (finalFoodbanks.length < 2) {
+          for (let fb of allFoodbanks) {
+            if (!finalFoodbanks.includes(fb)) {
+              finalFoodbanks.push(fb);
+              if (finalFoodbanks.length === 2) break;
+            }
+          }
+        }
+
         setFoodbanks(finalFoodbanks);
       } catch (err) {
         console.error("Error fetching foodbanks:", err);
@@ -60,10 +81,10 @@ const ProgramInstancePage = () => {
       }
     };
 
-    fetchFoodbanks();
-  }, []);
+    if (program) fetchFoodbanks();
+  }, [program]);
 
-  // Fetch related sponsors
+  // Fetch related sponsors (take current and next)
   useEffect(() => {
     const fetchSponsors = async () => {
       try {
@@ -71,8 +92,29 @@ const ProgramInstancePage = () => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const allSponsors = (await response.json()).items || [];
 
-        // Guarantee exactly 2 sponsors
-        let finalSponsors = allSponsors.slice(0, 2);
+        // Find current index
+        const currentIndex = allSponsors.findIndex(s => s.id === program?.id);
+        let finalSponsors = [];
+
+        if (currentIndex >= 0) {
+          finalSponsors.push(allSponsors[currentIndex]);
+          if (currentIndex + 1 < allSponsors.length) {
+            finalSponsors.push(allSponsors[currentIndex + 1]);
+          } else if (currentIndex > 0) {
+            finalSponsors.push(allSponsors[currentIndex - 1]);
+          }
+        }
+
+        // Fallback if not found
+        if (finalSponsors.length < 2) {
+          for (let s of allSponsors) {
+            if (!finalSponsors.includes(s)) {
+              finalSponsors.push(s);
+              if (finalSponsors.length === 2) break;
+            }
+          }
+        }
+
         setSponsors(finalSponsors);
       } catch (err) {
         console.error("Error fetching sponsors:", err);
@@ -81,8 +123,8 @@ const ProgramInstancePage = () => {
       }
     };
 
-    fetchSponsors();
-  }, []);
+    if (program) fetchSponsors();
+  }, [program]);
 
   const handleFoodbankClick = (foodbank) => {
     navigate(`/foodbanks/${encodeURIComponent(foodbank.name)}`, {
@@ -138,7 +180,9 @@ const ProgramInstancePage = () => {
         {/* Related Foodbanks */}
         <section className="mt-5 text-center">
           <h3>Related Food Banks</h3>
-          {foodbanksLoading ? <p>Loading foodbanks...</p> : (
+          {foodbanksLoading ? (
+            <p>Loading foodbanks...</p>
+          ) : (
             foodbanks.map(fb => (
               <div key={fb.id} className="border rounded p-2 my-2">
                 <a href="#" onClick={(e) => { e.preventDefault(); handleFoodbankClick(fb); }}>
@@ -152,7 +196,9 @@ const ProgramInstancePage = () => {
         {/* Related Sponsors */}
         <section className="mt-4 text-center">
           <h3>Related Sponsors</h3>
-          {sponsorsLoading ? <p>Loading sponsors...</p> : (
+          {sponsorsLoading ? (
+            <p>Loading sponsors...</p>
+          ) : (
             sponsors.map(sp => (
               <div key={sp.id} className="border rounded p-2 my-2">
                 <a href="#" onClick={(e) => { e.preventDefault(); handleSponsorClick(sp); }}>
