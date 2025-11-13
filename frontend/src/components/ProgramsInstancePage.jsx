@@ -161,16 +161,27 @@ const ProgramInstancePage = () => {
           )}
         </section>
 
-        <section className="mb-4">
+        <section className="mb-5">
           <h2>Details</h2>
           <ul style={{ listStyle: "none", padding: 0 }}>
             <li><strong>Name:</strong> {program.name || "N/A"}</li>
-            <li><strong>Type:</strong> {program.type || "N/A"}</li>
-            <li><strong>Start Date:</strong> {program.start_date || "N/A"}</li>
-            <li><strong>End Date:</strong> {program.end_date || "N/A"}</li>
-            <li><strong>Website:</strong> {program.website ? <a href={program.website} target="_blank" rel="noreferrer">Official Website</a> : "N/A"}</li>
+            <li><strong>Frequency:</strong> {program.frequency || "N/A"}</li>
+            <li><strong>Eligibility:</strong> {program.eligibility || "N/A"}</li>
+            <li><strong>Cost:</strong> {program.cost || "N/A"}</li>
+            <li>
+              <strong>Sign Up:</strong>{" "}
+              {program.sign_up_link ? (
+                <a href={program.sign_up_link} target="_blank" rel="noreferrer">
+                  Link
+                </a>
+              ) : (
+                "N/A"
+              )}
+            </li>
+            <li><strong>About:</strong> {program.about || "No description available."}</li>
           </ul>
         </section>
+
 
         <section className="mb-5 text-center">
           <h2>About</h2>
