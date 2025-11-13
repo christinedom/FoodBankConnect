@@ -41,6 +41,7 @@ from sqlalchemy.exc import (
     TimeoutError as SQLAlchemyTimeout,
 )
 
+
 # -------------------------------------------------------------------------
 # Configuration
 # -------------------------------------------------------------------------
@@ -77,8 +78,23 @@ engine: Engine = create_engine(
     future=True,
 )
 
+# -------------------------------------------------------------------------
+# Logging configuration
+# -------------------------------------------------------------------------
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 logger = logging.getLogger("fbc.api")
-logger.setLevel(getattr(logging, REQUEST_LOG_LEVEL, logging.INFO))
+
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
+    logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+logger.propagate = True
 
 
 # ------------------------------------------------------------------------------
@@ -193,6 +209,9 @@ def fetch_list(resource: str, start: Optional[str], size: int,
 
     with engine.connect() as conn:
         rows = conn.execute(text(sql_str), params).fetchall()
+    
+    logger.info(f"SQL Query: {sql_str}")
+    logger.info(f"Params: {params}")
 
     items = [_row_to_dict(r) for r in rows]
     next_start = items[-1]["id"] if items else None
@@ -266,43 +285,93 @@ def _apply_cursor(base_select: str, start: Optional[str], n: int) -> Tuple[str, 
 
 def _apply_filters_and_sort(resource: str, filters: Dict[str, Any], sort: List[str]) -> Tuple[str, Dict[str, Any]]:
     """
-    Builds dynamic SQL WHERE and ORDER BY clauses for filtering and sorting.
+    Builds dynamic SQL WHERE and ORDER BY clauses for filtering, sorting, and searching.
+    Supports:
+      - Exact match filters: city, eligibility, urgency
+      - ZIP prefix match: zipcode
+      - JSON containment: languages
+      - Text search via `search` key
+      - Sorting via frontend-friendly values or raw column names
     """
     where_clauses = []
     order_clauses = []
     params: Dict[str, Any] = {}
 
-    # --- Filters ---
+    # --- Model-specific searchable columns for full-text search ---
+    searchable_columns_by_model = {
+        "foodbanks": ["name", "about", "city", "address", "eligibility", "urgency"],
+        "programs": ["name", "description", "eligibility", "category", "location"],
+        "sponsors": ["name", "description", "website", "city", "contact"],
+    }
+    searchable_columns = searchable_columns_by_model.get(resource, ["name"])
+
+    # --- Full-text search ---
+    search_term = filters.pop("search", None)
+    if search_term:
+        search_term = search_term.strip()
+        if search_term:
+            search_clauses = [f"{col} ILIKE :search" for col in searchable_columns]
+            where_clauses.append("(" + " OR ".join(search_clauses) + ")")
+            params["search"] = f"%{search_term}%"
+
     for i, (col, val) in enumerate(filters.items()):
+        if not val or str(val).strip().lower() in ["all", "any"]:
+            continue  # skip empty or "All" filters
+
+        val = str(val).strip()
         param = f"f{i}"
 
         if col == "languages":
-            # Use JSON containment operator with a literal JSON array string
             where_clauses.append(f"{col} @> :{param}")
-            params[param] = f'["{val}"]'  # valid JSON string, not casted
+            params[param] = f'["{val}"]'
 
-        elif "%" in val:
-            where_clauses.append(f"{col} LIKE :{param}")
-            params[param] = val
+        elif col == "zipcode":
+            # Normalize and perform prefix match (ignore dashes)
+            val = val.replace("-", "").strip()
+            where_clauses.append(f"REPLACE({col}, '-', '') LIKE :{param}")
+            params[param] = f"{val}%"
 
-        else:
+        elif col in ["city", "eligibility", "urgency"]:
             where_clauses.append(f"{col} = :{param}")
             params[param] = val
 
+        else:
+            where_clauses.append(f"{col} ILIKE :{param}")
+            params[param] = f"%{val}%"
+
+
+    # --- Compose WHERE clause ---
     where_sql = ""
     if where_clauses:
         where_sql = " WHERE " + " AND ".join(where_clauses)
 
     # --- Sorting ---
+    SORT_MAPPING = {
+        "name_asc": ("name", "ASC"),
+        "name_desc": ("name", "DESC"),
+        "urgency_high": ("urgency", "DESC"),
+        "urgency_low": ("urgency", "ASC"),
+    }
+
     for s in sort:
-        if s.startswith("-"):
-            order_clauses.append(f"{s[1:]} DESC")
+        if s in SORT_MAPPING:
+            col_name, direction = SORT_MAPPING[s]
+            order_clauses.append(f"{col_name} {direction}")
         else:
-            order_clauses.append(f"{s} ASC")
+            # Handle raw sort values from frontend: sort=name / sort=-name
+            direction = "DESC" if s.startswith("-") else "ASC"
+            col_name = s.lstrip("-")
+            order_clauses.append(f"{col_name} {direction}")
 
     order_sql = ""
     if order_clauses:
         order_sql = " ORDER BY " + ", ".join(order_clauses)
+
+    # --- Debug logging ---
+    logger.debug(f"Filters applied: {filters}")
+    logger.debug(f"WHERE clause: {where_sql}")
+    logger.debug(f"ORDER clause: {order_sql}")
+    logger.debug(f"Params: {params}")
 
     return where_sql + order_sql, params
 
@@ -558,9 +627,53 @@ def lambda_handler(event, context):
     return awsgi.response(app, _normalize_http_event(event), context)
 
 
+@app.get("/v1/docs")
+def docs():
+    """
+    Returns usage documentation for the API.
+    """
+    docs = {
+        "endpoints": {
+            "/v1/foodbanks": {
+                "description": "List or filter foodbanks",
+                "query_parameters": {
+                    "search": "Full-text search on name, about, city, address, eligibility, urgency",
+                    "city": "Filter by city name",
+                    "urgency": "Filter by urgency level",
+                    "eligibility": "Filter by eligibility type",
+                    "sort": "Sort results (e.g., sort=name,-urgency)",
+                    "start": "Pagination start id",
+                    "size": f"Page size (1-{MAX_PAGE_SIZE})"
+                }
+            },
+            "/v1/programs": {
+                "description": "List or filter programs",
+                "query_parameters": {
+                    "search": "Full-text search on name, description, category, eligibility, location",
+                    "category": "Filter by program category",
+                    "sort": "Sort results (e.g., sort=-name,location)"
+                }
+            },
+            "/v1/sponsors": {
+                "description": "List or filter sponsors",
+                "query_parameters": {
+                    "search": "Full-text search on name, description, website, city, contact",
+                    "city": "Filter by city",
+                    "sort": "Sort results (e.g., sort=name)"
+                }
+            },
+            "/v1/search": {
+                "description": "Global search across all models using ?q=<term>"
+            }
+        }
+    }
+    return jsonify(docs)
+
 # ------------------------------------------------------------------------------
 # Local development entrypoint
 # ------------------------------------------------------------------------------
+from mangum import Mangum
+handler = Mangum(app)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "8000")), debug=False)
