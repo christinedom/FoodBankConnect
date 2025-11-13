@@ -11,18 +11,22 @@ FoodBankConnect API (Serverless-ready)
 --------------------------------------
 Read-only REST API exposing /v1/<resource> and /v1/<resource>/<id>.
 
+
 Technologies:
 - Flask for request routing
 - Flask-CORS for cross-origin support
 - SQLAlchemy (Core) for pooled, parameterized DB access
 - awsgi adapter for AWS Lambda compatibility
 
+
 Behavior:
 - Returns compact lists and single-object reads from the configured schema.
 - Produces descriptive, structured JSON errors on invalid input and runtime issues.
 """
 
+
 from __future__ import annotations
+
 
 import os
 import re
@@ -41,6 +45,7 @@ from sqlalchemy.exc import (
     TimeoutError as SQLAlchemyTimeout,
 )
 
+
 # -------------------------------------------------------------------------
 # Configuration
 # -------------------------------------------------------------------------
@@ -55,6 +60,7 @@ DB_SCHEMA = os.getenv("DB_SCHEMA", "app")
 MAX_PAGE_SIZE = int(os.getenv("MAX_REQUESTS", "50"))
 REQUEST_LOG_LEVEL = os.getenv("REQUEST_LOG_LEVEL", "INFO").upper()
 
+
 ALLOWED_TYPES: Dict[str, str] = {
     "foodbanks": "foodbank",
     "programs": "program",
@@ -63,7 +69,6 @@ ALLOWED_TYPES: Dict[str, str] = {
 
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
-
 # ------------------------------------------------------------------------------
 # Application / engine / logging
 # ------------------------------------------------------------------------------
@@ -71,19 +76,38 @@ _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 app = Flask(__name__)
 CORS(app)
 
+
 engine: Engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
     future=True,
 )
 
-logger = logging.getLogger("fbc.api")
-logger.setLevel(getattr(logging, REQUEST_LOG_LEVEL, logging.INFO))
 
+# -------------------------------------------------------------------------
+# Logging configuration
+# -------------------------------------------------------------------------
+import logging
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger("fbc.api")
+
+
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
+    logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+logger.propagate = True
 
 # ------------------------------------------------------------------------------
 # Utilities: request ids, JSON error format, schema/table helpers
 # ------------------------------------------------------------------------------
+
 
 def _request_id() -> str:
     """
@@ -94,7 +118,6 @@ def _request_id() -> str:
         rid = uuid.uuid4().hex
         g.request_id = rid
     return rid
-
 
 def json_error(status: int, code: str, message: str, *, details: Dict[str, Any] | None = None):
     """
@@ -110,6 +133,8 @@ def json_error(status: int, code: str, message: str, *, details: Dict[str, Any] 
     return jsonify(payload), status
 
 
+
+
 def _validate_ident(name: str) -> str:
     """
     Validates that the provided name is a simple, unquoted PostgreSQL identifier.
@@ -117,7 +142,6 @@ def _validate_ident(name: str) -> str:
     if not _IDENT_RE.match(name or ""):
         raise ValueError("DB_SCHEMA must be a simple identifier (e.g., 'app' or 'public').")
     return name
-
 
 SCHEMA = _validate_ident(DB_SCHEMA)
 
@@ -147,9 +171,12 @@ def _table_exists(table_qualified: string) -> bool:
         return bool(conn.execute(sql, {"schema": schema, "table": table}).scalar())
 
 
+
+
 # ------------------------------------------------------------------------------
 # Row mappers
 # ------------------------------------------------------------------------------
+
 
 def _row_to_dict(row: Row) -> Dict[str, Any]:
     """
@@ -158,9 +185,12 @@ def _row_to_dict(row: Row) -> Dict[str, Any]:
     return dict(row._mapping)
 
 
+
+
 # ------------------------------------------------------------------------------
 # Data access
 # ------------------------------------------------------------------------------
+
 
 def fetch_one(resource: str, item_id: str) -> Optional[Dict[str, Any]]:
     """
@@ -173,6 +203,8 @@ def fetch_one(resource: str, item_id: str) -> Optional[Dict[str, Any]]:
     return _row_to_dict(row) if row else None
 
 
+
+
 def fetch_list(resource: str, start: Optional[str], size: int,
                filters: Dict[str, Any] = None, sort: List[str] = None) -> Tuple[List[Dict[str, Any]], Optional[str]]:
     """
@@ -182,21 +214,31 @@ def fetch_list(resource: str, start: Optional[str], size: int,
     n = _clamp_page_size(size)
     base = f"SELECT * FROM {_table_qualified(resource)}"
 
+
     filters = filters or {}
     sort = sort or []
+
 
     # Build WHERE and ORDER BY dynamically
     filter_sort_sql, params = _apply_filters_and_sort(resource, filters, sort)
 
+
     sql_str = base + filter_sort_sql + "\nLIMIT :n"
     params["n"] = n
 
+
     with engine.connect() as conn:
         rows = conn.execute(text(sql_str), params).fetchall()
+   
+    logger.info(f"SQL Query: {sql_str}")
+    logger.info(f"Params: {params}")
+
 
     items = [_row_to_dict(r) for r in rows]
     next_start = items[-1]["id"] if items else None
     return items, next_start
+
+
 
 
 def _clamp_page_size(size: Optional[int]) -> int:
@@ -211,6 +253,8 @@ def _clamp_page_size(size: Optional[int]) -> int:
     return n
 
 
+
+
 def _order_numeric_first_sql() -> str:
     """
     ORDER BY clause that places numeric ids first (ascending as bigint), then lexicographic ids.
@@ -223,6 +267,8 @@ def _order_numeric_first_sql() -> str:
     """
 
 
+
+
 def _apply_cursor(base_select: str, start: Optional[str], n: int) -> Tuple[str, Dict[str, Any]]:
     """
     Builds cursored list query:
@@ -232,8 +278,10 @@ def _apply_cursor(base_select: str, start: Optional[str], n: int) -> Tuple[str, 
     """
     params: Dict[str, Any] = {"n": n}
 
+
     if start is None:
         return base_select + _order_numeric_first_sql() + "\nLIMIT :n", params
+
 
     if str(start).isdigit():
         params["start"] = start
@@ -249,6 +297,7 @@ def _apply_cursor(base_select: str, start: Optional[str], n: int) -> Tuple[str, 
             params,
         )
 
+
     params["start"] = start
     return (
         base_select
@@ -260,56 +309,126 @@ def _apply_cursor(base_select: str, start: Optional[str], n: int) -> Tuple[str, 
         params,
     )
 
+
 # ------------------------------------------------------------------------------
 # Filtering and sorting helper
 # ------------------------------------------------------------------------------
 
+
 def _apply_filters_and_sort(resource: str, filters: Dict[str, Any], sort: List[str]) -> Tuple[str, Dict[str, Any]]:
     """
-    Builds dynamic SQL WHERE and ORDER BY clauses for filtering and sorting.
+    Builds dynamic SQL WHERE and ORDER BY clauses for filtering, sorting, and searching.
+    Supports:
+      - Exact match filters: city, eligibility, urgency
+      - ZIP prefix match: zipcode
+      - JSON containment: languages
+      - Text search via `search` key
+      - Sorting via frontend-friendly values or raw column names
     """
     where_clauses = []
     order_clauses = []
     params: Dict[str, Any] = {}
 
-    # --- Filters ---
+
+    # --- Model-specific searchable columns for full-text search ---
+    searchable_columns_by_model = {
+        "foodbanks": ["name", "about", "city", "address", "eligibility", "urgency"],
+        "programs": ["name", "description", "eligibility", "category", "location"],
+        "sponsors": ["name", "description", "website", "city", "contact"],
+    }
+    searchable_columns = searchable_columns_by_model.get(resource, ["name"])
+
+
+    # --- Full-text search ---
+    search_term = filters.pop("search", None)
+    if search_term:
+        search_term = search_term.strip()
+        if search_term:
+            search_clauses = [f"{col} ILIKE :search" for col in searchable_columns]
+            where_clauses.append("(" + " OR ".join(search_clauses) + ")")
+            params["search"] = f"%{search_term}%"
+
+
     for i, (col, val) in enumerate(filters.items()):
+        if not val or str(val).strip().lower() in ["all", "any"]:
+            continue  # skip empty or "All" filters
+
+
+        val = str(val).strip()
         param = f"f{i}"
 
+
         if col == "languages":
-            # Use JSON containment operator with a literal JSON array string
             where_clauses.append(f"{col} @> :{param}")
-            params[param] = f'["{val}"]'  # valid JSON string, not casted
+            params[param] = f'["{val}"]'
 
-        elif "%" in val:
-            where_clauses.append(f"{col} LIKE :{param}")
-            params[param] = val
 
-        else:
+        elif col == "zipcode":
+            # Normalize and perform prefix match (ignore dashes)
+            val = val.replace("-", "").strip()
+            where_clauses.append(f"REPLACE({col}, '-', '') LIKE :{param}")
+            params[param] = f"{val}%"
+
+
+        elif col in ["city", "eligibility", "urgency"]:
             where_clauses.append(f"{col} = :{param}")
             params[param] = val
 
+
+        else:
+            where_clauses.append(f"{col} ILIKE :{param}")
+            params[param] = f"%{val}%"
+
+
+
+
+    # --- Compose WHERE clause ---
     where_sql = ""
     if where_clauses:
         where_sql = " WHERE " + " AND ".join(where_clauses)
 
+
     # --- Sorting ---
+    SORT_MAPPING = {
+        "name_asc": ("name", "ASC"),
+        "name_desc": ("name", "DESC"),
+        "urgency_high": ("urgency", "DESC"),
+        "urgency_low": ("urgency", "ASC"),
+    }
+
+
     for s in sort:
-        if s.startswith("-"):
-            order_clauses.append(f"{s[1:]} DESC")
+        if s in SORT_MAPPING:
+            col_name, direction = SORT_MAPPING[s]
+            order_clauses.append(f"{col_name} {direction}")
         else:
-            order_clauses.append(f"{s} ASC")
+            # Handle raw sort values from frontend: sort=name / sort=-name
+            direction = "DESC" if s.startswith("-") else "ASC"
+            col_name = s.lstrip("-")
+            order_clauses.append(f"{col_name} {direction}")
+
 
     order_sql = ""
     if order_clauses:
         order_sql = " ORDER BY " + ", ".join(order_clauses)
 
+
+    # --- Debug logging ---
+    logger.debug(f"Filters applied: {filters}")
+    logger.debug(f"WHERE clause: {where_sql}")
+    logger.debug(f"ORDER clause: {order_sql}")
+    logger.debug(f"Params: {params}")
+
+
     return where_sql + order_sql, params
+
+
 
 
 # ------------------------------------------------------------------------------
 # Request logging
 # ------------------------------------------------------------------------------
+
 
 @app.before_request
 def _assign_request_id_and_log():
@@ -326,6 +445,8 @@ def _assign_request_id_and_log():
     )
 
 
+
+
 @app.after_request
 def _after(resp):
     """
@@ -335,9 +456,12 @@ def _after(resp):
     return resp
 
 
+
+
 # ------------------------------------------------------------------------------
 # Routes
 # ------------------------------------------------------------------------------
+
 
 @app.get("/health")
 def health():
@@ -353,6 +477,8 @@ def health():
         return json_error(500, "HealthCheckFailed", "Database connectivity check failed.", details={"reason": str(e)})
 
 
+
+
 @app.get("/v1/<resource>")
 @app.get("/v1/<resource>/<item_id>")
 def handle_resource(resource: str, item_id: Optional[str] = None):
@@ -361,6 +487,7 @@ def handle_resource(resource: str, item_id: Optional[str] = None):
     """
     if resource not in ALLOWED_TYPES:
         return json_error(404, "NotFound", "Unknown resource.", details={"resource": resource})
+
 
     table = _table_qualified(resource)
     try:
@@ -372,6 +499,7 @@ def handle_resource(resource: str, item_id: Optional[str] = None):
                 details={"schema": SCHEMA, "missing": [table]},
             )
 
+
         if item_id:
             obj = fetch_one(resource, item_id)
             if not obj:
@@ -379,11 +507,13 @@ def handle_resource(resource: str, item_id: Optional[str] = None):
                 return json_error(404, "NotFound", f"{singular} not found.", details={"id": item_id})
             return jsonify({"type": ALLOWED_TYPES[resource], **obj, "request_id": _request_id()})
 
+
         # -----------------------------
         # Filtering and sorting support
         # -----------------------------
         filters = {}
         sort = []
+
 
         for key, val in request.args.items():
             if key in ("start", "size"):
@@ -393,21 +523,25 @@ def handle_resource(resource: str, item_id: Optional[str] = None):
             else:
                 filters[key] = val
 
+
         try:
             size_str = request.args.get("size")
             size = int(size_str) if size_str else 25
         except ValueError:
             return json_error(400, "BadRequest", "Query parameter 'size' must be an integer.")
 
+
         try:
             items, next_start = fetch_list(resource, request.args.get("start"), size, filters, sort)
         except ValueError as ve:
             return json_error(400, "BadRequest", str(ve), details={"max_size": MAX_PAGE_SIZE})
 
+
         payload: Dict[str, Any] = {"items": items, "request_id": _request_id()}
         if next_start:
             payload["next_start"] = next_start
         return jsonify(payload)
+
 
     except ProgrammingError as e:
         # Handles missing relations and syntax errors; returns descriptive output.
@@ -433,9 +567,11 @@ def handle_resource(resource: str, item_id: Optional[str] = None):
         logger.exception("unhandled error")
         return json_error(500, "InternalServerError", "Unexpected error occurred.", details={"reason": str(e)})
 
+
 # ------------------------------------------------------------------------------
 # Full-site search endpoint
 # ------------------------------------------------------------------------------
+
 
 @app.get("/v1/search")
 def search_all():
@@ -447,9 +583,11 @@ def search_all():
     if not query:
         return jsonify({"items": [], "request_id": _request_id()})
 
+
     q_lower = query.lower()
     query_terms = re.findall(r"\b\w+\b", q_lower)
     results: List[Dict[str, Any]] = []
+
 
     def relevance_score(text: str) -> int:
         """Compute a simple relevance score based on phrase and word frequency."""
@@ -457,6 +595,7 @@ def search_all():
         phrase_score = text_lower.count(q_lower) * 3
         word_score = sum(text_lower.count(term) for term in query_terms)
         return phrase_score + word_score
+
 
     def get_snippet(text: str) -> str:
         """Return ~150 chars of surrounding text around the first match."""
@@ -478,6 +617,7 @@ def search_all():
         # If no match found, return beginning of text
         return text[:150] if len(text) > 150 else text
 
+
     with engine.connect() as conn:
         for model in ALLOWED_TYPES.keys():
             table = _table_qualified(model)
@@ -485,6 +625,7 @@ def search_all():
                 # Get all rows and convert to searchable text
                 sql = text(f"SELECT * FROM {table}")
                 rows = conn.execute(sql).fetchall()
+
 
                 for row in rows:
                     # Convert row to dict and create searchable text from all string fields
@@ -498,7 +639,7 @@ def search_all():
                             else:
                                 text_parts.append(str(value))
                     text_blob = " ".join(text_parts)
-                    
+                   
                     score = relevance_score(text_blob)
                     if score > 0:
                         # Use the original model name (lowercase) to match route paths
@@ -506,7 +647,7 @@ def search_all():
                         snippet = get_snippet(text_blob)
                         # Clean up snippet - remove extra whitespace and newlines
                         snippet = " ".join(snippet.split())[:150]
-                        
+                       
                         results.append({
                             "model": model_name,  # lowercase to match routes
                             "id": row_dict.get("id", ""),
@@ -519,8 +660,10 @@ def search_all():
                 logger.exception("Full error details")
                 continue
 
+
     # Sort by relevance (highest first)
     results.sort(key=lambda r: r["score"], reverse=True)
+
 
     return jsonify({
         "items": results,
@@ -528,9 +671,11 @@ def search_all():
         "request_id": _request_id(),
     })
 
+
 # ------------------------------------------------------------------------------
 # AWS Lambda entrypoint
 # ------------------------------------------------------------------------------
+
 
 def _normalize_http_event(e: dict) -> dict:
     # If HTTP API v2 / Function URL
@@ -552,15 +697,63 @@ def _normalize_http_event(e: dict) -> dict:
         }
     return e  # already v1 or non-HTTP
 
+
 def lambda_handler(event, context):
     import awsgi  # this is the module provided by aws-wsgi
     print("event version:", event.get("version"))
     return awsgi.response(app, _normalize_http_event(event), context)
 
 
+
+
+@app.get("/v1/docs")
+def docs():
+    """
+    Returns usage documentation for the API.
+    """
+    docs = {
+        "endpoints": {
+            "/v1/foodbanks": {
+                "description": "List or filter foodbanks",
+                "query_parameters": {
+                    "search": "Full-text search on name, about, city, address, eligibility, urgency",
+                    "city": "Filter by city name",
+                    "urgency": "Filter by urgency level",
+                    "eligibility": "Filter by eligibility type",
+                    "sort": "Sort results (e.g., sort=name,-urgency)",
+                    "start": "Pagination start id",
+                    "size": f"Page size (1-{MAX_PAGE_SIZE})"
+                }
+            },
+            "/v1/programs": {
+                "description": "List or filter programs",
+                "query_parameters": {
+                    "search": "Full-text search on name, description, category, eligibility, location",
+                    "category": "Filter by program category",
+                    "sort": "Sort results (e.g., sort=-name,location)"
+                }
+            },
+            "/v1/sponsors": {
+                "description": "List or filter sponsors",
+                "query_parameters": {
+                    "search": "Full-text search on name, description, website, city, contact",
+                    "city": "Filter by city",
+                    "sort": "Sort results (e.g., sort=name)"
+                }
+            },
+            "/v1/search": {
+                "description": "Global search across all models using ?q=<term>"
+            }
+        }
+    }
+    return jsonify(docs)
+
+
 # ------------------------------------------------------------------------------
 # Local development entrypoint
 # ------------------------------------------------------------------------------
+from mangum import Mangum
+handler = Mangum(app)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "8000")), debug=False)
