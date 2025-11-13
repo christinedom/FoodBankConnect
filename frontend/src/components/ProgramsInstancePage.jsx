@@ -1,193 +1,166 @@
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import Header from "./Header";
 import Footer from "./Footer";
 import Breadcrumb from "./Breadcrumb";
 
-const BASE_URL = "https://api.foodbankconnect.me/v1/programs";
+const PROGRAMS_URL = "https://api.foodbankconnect.me/v1/programs";
 const FOODBANKS_URL = "https://api.foodbankconnect.me/v1/foodbanks?size=100&start=1";
 const SPONSORS_URL = "https://api.foodbankconnect.me/v1/sponsors?size=100&start=1";
 
-const ProgramsInstancePage = () => {
+const ProgramInstancePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { id } = location.state || {};
+  const { id, name } = location.state || {};
+
   const [program, setProgram] = useState(null);
   const [loading, setLoading] = useState(true);
-
   const [foodbanks, setFoodbanks] = useState([]);
+  const [foodbanksLoading, setFoodbanksLoading] = useState(true);
   const [sponsors, setSponsors] = useState([]);
+  const [sponsorsLoading, setSponsorsLoading] = useState(true);
 
+  // Fetch program details
   useEffect(() => {
-    const fetchProgram = async () => {
+    const fetchProgramDetails = async () => {
       if (!id) {
         setLoading(false);
         return;
       }
-
       try {
-        // Fetch this program
-        const res = await fetch(`${BASE_URL}/${id}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const programData = await res.json();
-        setProgram(programData);
-
-        // === Fetch related foodbanks (host + neighbor) ===
-        const fbRes = await fetch(FOODBANKS_URL);
-        const fbData = (await fbRes.json()).items || [];
-
-        let fbLinks = [];
-        if (programData.host) {
-          const hostIndex = fbData.findIndex(fb => fb.name === programData.host);
-          if (hostIndex !== -1) {
-            fbLinks.push({ id: fbData[hostIndex].id, name: fbData[hostIndex].name });
-
-            const neighborIndex =
-              hostIndex < fbData.length - 1 ? hostIndex + 1 : hostIndex - 1;
-            if (neighborIndex >= 0 && neighborIndex !== hostIndex) {
-              fbLinks.push({ id: fbData[neighborIndex].id, name: fbData[neighborIndex].name });
-            }
-          }
-        }
-
-        // Fill to 2 if necessary
-        for (let fb of fbData) {
-          if (fbLinks.length >= 2) break;
-          if (!fbLinks.find(f => f.id === fb.id)) fbLinks.push({ id: fb.id, name: fb.name });
-        }
-        setFoodbanks(fbLinks);
-
-        // === Fetch related sponsors (ID + neighbor) ===
-        const sponsorRes = await fetch(SPONSORS_URL);
-        const allSponsors = (await sponsorRes.json()).items || [];
-
-        const programId = parseInt(programData.id, 10);
-        const programIndex = allSponsors.findIndex(s => s.id === programId);
-        let sponsorLinks = [];
-
-        if (programIndex >= 0) {
-          sponsorLinks.push(allSponsors[programIndex]);
-
-          const neighborIndex =
-            programIndex < allSponsors.length - 1 ? programIndex + 1 : programIndex - 1;
-          if (neighborIndex >= 0 && neighborIndex !== programIndex) {
-            sponsorLinks.push(allSponsors[neighborIndex]);
-          }
-        }
-
-        // Fill to 2 if necessary
-        for (let sp of allSponsors) {
-          if (sponsorLinks.length >= 2) break;
-          if (!sponsorLinks.includes(sp)) sponsorLinks.push(sp);
-        }
-
-        setSponsors(sponsorLinks);
+        const response = await fetch(`${PROGRAMS_URL}/${id}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        setProgram(data);
       } catch (err) {
-        console.error("Error fetching program or related data:", err);
+        console.error("Error fetching program:", err);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchProgram();
+    fetchProgramDetails();
   }, [id]);
 
-  const handleNavigateFoodbank = (fb) => {
-    navigate(`/foodbanks/${encodeURIComponent(fb.name)}`, {
-      state: { id: fb.id, name: fb.name },
+  // Fetch related foodbanks (same logic as foodbank page’s programs)
+  useEffect(() => {
+    const fetchFoodbanks = async () => {
+      try {
+        const response = await fetch(FOODBANKS_URL);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const allFoodbanks = (await response.json()).items || [];
+
+        // Guarantee exactly 2 foodbanks
+        let finalFoodbanks = allFoodbanks.slice(0, 2);
+        setFoodbanks(finalFoodbanks);
+      } catch (err) {
+        console.error("Error fetching foodbanks:", err);
+      } finally {
+        setFoodbanksLoading(false);
+      }
+    };
+
+    fetchFoodbanks();
+  }, []);
+
+  // Fetch related sponsors
+  useEffect(() => {
+    const fetchSponsors = async () => {
+      try {
+        const response = await fetch(SPONSORS_URL);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const allSponsors = (await response.json()).items || [];
+
+        // Guarantee exactly 2 sponsors
+        let finalSponsors = allSponsors.slice(0, 2);
+        setSponsors(finalSponsors);
+      } catch (err) {
+        console.error("Error fetching sponsors:", err);
+      } finally {
+        setSponsorsLoading(false);
+      }
+    };
+
+    fetchSponsors();
+  }, []);
+
+  const handleFoodbankClick = (foodbank) => {
+    navigate(`/foodbanks/${encodeURIComponent(foodbank.name)}`, {
+      state: { id: foodbank.id, name: foodbank.name },
     });
   };
 
-  const handleNavigateSponsor = (sp) => {
-    navigate(`/sponsors/${encodeURIComponent(sp.name)}`, {
-      state: { id: sp.id, name: sp.name },
+  const handleSponsorClick = (sponsor) => {
+    navigate(`/sponsors/${encodeURIComponent(sponsor.name)}`, {
+      state: { id: sponsor.id, name: sponsor.name },
     });
   };
 
-  if (loading) return <div className="container my-5">Loading program details...</div>;
-  if (!program) return <div className="container my-5">Program not found.</div>;
+  if (loading) return <div className="container my-5"><h2>Loading Program Details...</h2></div>;
+  if (!program) return <div className="container my-5"><h2>Program not found or ID missing.</h2></div>;
 
   return (
-    <div className="wrapper">
+    <div id="wrapper">
       <Navbar />
-      <Header headerText={program.name} />
-      <Breadcrumb model_type="programs" current_page={program.name} />
+      <Header headerText={`Program - ${program.name || name}`} />
+      <Breadcrumb model_type="programs" current_page={program.name || name} />
 
       <main className="container my-5">
-        <div className="row align-items-center">
-          <div className="col-lg-6 mb-4 text-center">
-            {program.image ? (
-              <img
-                src={program.image}
-                className="img-fluid rounded shadow"
-                alt={program.name}
-                style={{ maxHeight: "400px", objectFit: "cover" }}
-              />
-            ) : (
-              <div className="text-muted">No image available</div>
-            )}
-          </div>
+        <section className="mb-4 text-center">
+          {program.image ? (
+            <img
+              src={program.image}
+              alt={`${program.name} Logo`}
+              className="img-fluid rounded shadow"
+              style={{ maxHeight: "400px", objectFit: "cover" }}
+            />
+          ) : (
+            <div className="text-muted">No image available</div>
+          )}
+        </section>
 
-          <div className="col-lg-6 text-center">
-            <h3 className="fw-bold mb-4">Program Details</h3>
-            <ul className="list-unstyled">
-              <li><strong>Frequency:</strong> {program.frequency || "N/A"}</li>
-              <li><strong>Eligibility:</strong> {program.eligibility || "Everybody"}</li>
-              <li><strong>Cost:</strong> {program.cost || "N/A"}</li>
-              <li>
-                <strong>Sign Up / Learn More:</strong>{" "}
-                {program.sign_up_link ? (
-                  <a href={program.sign_up_link} target="_blank" rel="noreferrer">
-                    Sign Up Page
-                  </a>
-                ) : (
-                  "N/A"
-                )}
-              </li>
-            </ul>
-          </div>
-        </div>
+        <section className="mb-4">
+          <h2>Details</h2>
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            <li><strong>Name:</strong> {program.name || "N/A"}</li>
+            <li><strong>Type:</strong> {program.type || "N/A"}</li>
+            <li><strong>Start Date:</strong> {program.start_date || "N/A"}</li>
+            <li><strong>End Date:</strong> {program.end_date || "N/A"}</li>
+            <li><strong>Website:</strong> {program.website ? <a href={program.website} target="_blank" rel="noreferrer">Official Website</a> : "N/A"}</li>
+          </ul>
+        </section>
 
-        <section className="mt-5 text-center">
-          <h3>About the Program</h3>
-          <p className="mt-2">{program.about || "No description available."}</p>
+        <section className="mb-5 text-center">
+          <h2>About</h2>
+          <p className="mt-3">{program.about || "No description available."}</p>
         </section>
 
         {/* Related Foodbanks */}
         <section className="mt-5 text-center">
-          <h3>Related Foodbanks</h3>
-          {foodbanks.map(fb => (
-            <p key={fb.id}>
-              <a
-                href="#"
-                onClick={e => {
-                  e.preventDefault();
-                  handleNavigateFoodbank(fb);
-                }}
-              >
-                {fb.name}
-              </a>
-            </p>
-          ))}
+          <h3>Related Food Banks</h3>
+          {foodbanksLoading ? <p>Loading foodbanks...</p> : (
+            foodbanks.map(fb => (
+              <div key={fb.id} className="border rounded p-2 my-2">
+                <a href="#" onClick={(e) => { e.preventDefault(); handleFoodbankClick(fb); }}>
+                  {fb.name}
+                </a>
+              </div>
+            ))
+          )}
         </section>
 
         {/* Related Sponsors */}
         <section className="mt-4 text-center">
           <h3>Related Sponsors</h3>
-          {sponsors.map(sp => (
-            <p key={sp.id}>
-              <a
-                href="#"
-                onClick={e => {
-                  e.preventDefault();
-                  handleNavigateSponsor(sp);
-                }}
-              >
-                {sp.name}
-              </a>
-            </p>
-          ))}
+          {sponsorsLoading ? <p>Loading sponsors...</p> : (
+            sponsors.map(sp => (
+              <div key={sp.id} className="border rounded p-2 my-2">
+                <a href="#" onClick={(e) => { e.preventDefault(); handleSponsorClick(sp); }}>
+                  {sp.name}
+                </a>
+              </div>
+            ))
+          )}
         </section>
       </main>
 
@@ -196,4 +169,4 @@ const ProgramsInstancePage = () => {
   );
 };
 
-export default ProgramsInstancePage;
+export default ProgramInstancePage;
