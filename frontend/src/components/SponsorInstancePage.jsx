@@ -8,6 +8,7 @@ import styles from "../styles/Sponsors.module.css";
 
 const FOODBANKS_URL = "https://api.foodbankconnect.me/v1/foodbanks?size=100&start=1";
 const PROGRAMS_URL = "https://api.foodbankconnect.me/v1/programs?size=100&start=1";
+const SPONSORS_URL = "https://api.foodbankconnect.me/v1/sponsors";
 
 const SponsorInstancePage = () => {
   const location = useLocation();
@@ -26,26 +27,31 @@ const SponsorInstancePage = () => {
       }
 
       try {
-        // Fetch sponsor info
-        const sponsorRes = await fetch(`https://api.foodbankconnect.me/v1/sponsors/${id}`);
+        // --- Fetch sponsor info ---
+        const sponsorRes = await fetch(`${SPONSORS_URL}/${id}`);
         if (!sponsorRes.ok) throw new Error(`HTTP ${sponsorRes.status}`);
         const sponsorData = await sponsorRes.json();
         setSponsor(sponsorData);
 
         const currentId = parseInt(id, 10);
-        const neighborId = currentId > 1 ? currentId - 1 : currentId + 1;
 
         // --- Fetch all foodbanks ---
         const fbRes = await fetch(FOODBANKS_URL);
         const fbItems = (await fbRes.json()).items || [];
 
-        // Only main sponsor ID and neighbor
         let fbLinks = [];
-        const fbMatch = fbItems.find(fb => fb.id === currentId);
-        if (fbMatch) fbLinks.push(fbMatch);
+        const currentIndex = fbItems.findIndex(fb => fb.id === currentId);
+        const neighborIndex =
+          currentIndex < fbItems.length - 1 ? currentIndex + 1 : currentIndex - 1;
 
-        const fbNeighbor = fbItems.find(fb => fb.id === neighborId && fb.id !== currentId);
-        if (fbNeighbor) fbLinks.push(fbNeighbor);
+        if (currentIndex >= 0) fbLinks.push(fbItems[currentIndex]);
+        if (neighborIndex >= 0) fbLinks.push(fbItems[neighborIndex]);
+
+        // Fill if fewer than 2
+        for (let fb of fbItems) {
+          if (fbLinks.length >= 2) break;
+          if (!fbLinks.includes(fb)) fbLinks.push(fb);
+        }
 
         setFoodbanks(fbLinks);
 
@@ -54,14 +60,20 @@ const SponsorInstancePage = () => {
         const progItems = (await progRes.json()).items || [];
 
         let progLinks = [];
-        const progMatch = progItems.find(p => p.id === currentId);
-        if (progMatch) progLinks.push(progMatch);
+        const progIndex = progItems.findIndex(p => p.id === currentId);
+        const progNeighborIndex =
+          progIndex < progItems.length - 1 ? progIndex + 1 : progIndex - 1;
 
-        const progNeighbor = progItems.find(p => p.id === neighborId && p.id !== currentId);
-        if (progNeighbor) progLinks.push(progNeighbor);
+        if (progIndex >= 0) progLinks.push(progItems[progIndex]);
+        if (progNeighborIndex >= 0) progLinks.push(progItems[progNeighborIndex]);
+
+        // Fill if fewer than 2
+        for (let p of progItems) {
+          if (progLinks.length >= 2) break;
+          if (!progLinks.includes(p)) progLinks.push(p);
+        }
 
         setPrograms(progLinks);
-
 
       } catch (err) {
         console.error("Error fetching sponsor or related data:", err);

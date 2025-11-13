@@ -33,57 +33,56 @@ const ProgramsInstancePage = () => {
         const programData = await res.json();
         setProgram(programData);
 
-        // === Fetch related foodbanks ===
+        // === Fetch related foodbanks (host + neighbor) ===
         const fbRes = await fetch(FOODBANKS_URL);
-        if (!fbRes.ok) throw new Error(`HTTP ${fbRes.status}`);
         const fbData = (await fbRes.json()).items || [];
 
-        // Host foodbank + neighbor
         let fbLinks = [];
         if (programData.host) {
           const hostIndex = fbData.findIndex(fb => fb.name === programData.host);
           if (hostIndex !== -1) {
             fbLinks.push({ id: fbData[hostIndex].id, name: fbData[hostIndex].name });
-            let neighborIndex =
-              hostIndex > 0
-                ? hostIndex - 1
-                : hostIndex < fbData.length - 1
-                ? hostIndex + 1
-                : null;
-            if (neighborIndex !== null && neighborIndex !== hostIndex) {
+
+            const neighborIndex =
+              hostIndex < fbData.length - 1 ? hostIndex + 1 : hostIndex - 1;
+            if (neighborIndex >= 0 && neighborIndex !== hostIndex) {
               fbLinks.push({ id: fbData[neighborIndex].id, name: fbData[neighborIndex].name });
             }
           }
         }
 
-        // If less than 2, fill with extras
-        while (fbLinks.length < 2 && fbData.length > 0) {
-          for (let fb of fbData) {
-            if (!fbLinks.find(f => f.id === fb.id)) {
-              fbLinks.push({ id: fb.id, name: fb.name });
-              if (fbLinks.length === 2) break;
-            }
+        // Fill to 2 if necessary
+        for (let fb of fbData) {
+          if (fbLinks.length >= 2) break;
+          if (!fbLinks.find(f => f.id === fb.id)) fbLinks.push({ id: fb.id, name: fb.name });
+        }
+        setFoodbanks(fbLinks);
+
+        // === Fetch related sponsors (ID + neighbor) ===
+        const sponsorRes = await fetch(SPONSORS_URL);
+        const allSponsors = (await sponsorRes.json()).items || [];
+
+        const programId = parseInt(programData.id, 10);
+        const programIndex = allSponsors.findIndex(s => s.id === programId);
+        let sponsorLinks = [];
+
+        if (programIndex >= 0) {
+          sponsorLinks.push(allSponsors[programIndex]);
+
+          const neighborIndex =
+            programIndex < allSponsors.length - 1 ? programIndex + 1 : programIndex - 1;
+          if (neighborIndex >= 0 && neighborIndex !== programIndex) {
+            sponsorLinks.push(allSponsors[neighborIndex]);
           }
         }
 
-        setFoodbanks(fbLinks);
+        // Fill to 2 if necessary
+        for (let sp of allSponsors) {
+          if (sponsorLinks.length >= 2) break;
+          if (!sponsorLinks.includes(sp)) sponsorLinks.push(sp);
+        }
 
-        // === Fetch sponsors (using ID and neighbor ID logic) ===
-        const sponsorRes = await fetch(SPONSORS_URL);
-        if (!sponsorRes.ok) throw new Error(`HTTP ${sponsorRes.status}`);
-        const allSponsors = (await sponsorRes.json()).items || [];
-
-        const currentId = parseInt(programData.id, 10);
-        const neighborId = currentId > 1 ? currentId - 1 : currentId + 1;
-
-        const mainSponsor = allSponsors.find(s => s.id === currentId);
-        const neighborSponsor = allSponsors.find(s => s.id === neighborId);
-
-        const finalSponsors = [];
-        if (mainSponsor) finalSponsors.push(mainSponsor);
-        if (neighborSponsor) finalSponsors.push(neighborSponsor);
-
-        setSponsors(finalSponsors);
+        setSponsors(sponsorLinks);
       } catch (err) {
         console.error("Error fetching program or related data:", err);
       } finally {
@@ -155,7 +154,7 @@ const ProgramsInstancePage = () => {
           <p className="mt-2">{program.about || "No description available."}</p>
         </section>
 
-        {/* Foodbanks */}
+        {/* Related Foodbanks */}
         <section className="mt-5 text-center">
           <h3>Related Foodbanks</h3>
           {foodbanks.map(fb => (
@@ -173,7 +172,7 @@ const ProgramsInstancePage = () => {
           ))}
         </section>
 
-        {/* Sponsors */}
+        {/* Related Sponsors */}
         <section className="mt-4 text-center">
           <h3>Related Sponsors</h3>
           {sponsors.map(sp => (
