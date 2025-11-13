@@ -90,7 +90,11 @@ This site helps solve the problem that many low-income and underserved communiti
    * Example: `https://api.foodbankconnect.me/v1/sponsors/123`
 
 **Searching**
-(Fill in)
+
+* `GET /v1/search` — returns instance pages relating to the query phrase.
+
+  * Query params: `q` (String)
+  * Example: `https://api.foodbankconnect.me/v1/search?q=houston`
 
 **Filtering**
 (Fill in)
