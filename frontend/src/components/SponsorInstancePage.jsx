@@ -39,16 +39,16 @@ const SponsorInstancePage = () => {
         const fbRes = await fetch(FOODBANKS_URL);
         const fbItems = (await fbRes.json()).items || [];
 
-        let fbLinks = [];
-        const currentIndex = fbItems.findIndex(fb => fb.id === currentId);
-        const neighborIndex =
-          currentIndex < fbItems.length - 1 ? currentIndex + 1 : currentIndex - 1;
+        const fbIndex = fbItems.findIndex(fb => fb.id === currentId);
+        const fbNeighbor =
+          fbIndex < fbItems.length - 1 ? fbItems[fbIndex + 1] : fbItems[fbIndex - 1];
+        const fbLinks = [];
 
-        if (currentIndex >= 0) fbLinks.push(fbItems[currentIndex]);
-        if (neighborIndex >= 0) fbLinks.push(fbItems[neighborIndex]);
+        if (fbIndex >= 0) fbLinks.push(fbItems[fbIndex]);
+        if (fbNeighbor) fbLinks.push(fbNeighbor);
 
         // Fill if fewer than 2
-        for (let fb of fbItems) {
+        for (const fb of fbItems) {
           if (fbLinks.length >= 2) break;
           if (!fbLinks.includes(fb)) fbLinks.push(fb);
         }
@@ -59,22 +59,23 @@ const SponsorInstancePage = () => {
         const progRes = await fetch(PROGRAMS_URL);
         const progItems = (await progRes.json()).items || [];
 
-        let progLinks = [];
         const progIndex = progItems.findIndex(p => p.id === currentId);
-        const progNeighborIndex =
-          progIndex < progItems.length - 1 ? progIndex + 1 : progIndex - 1;
+        const progNeighbor =
+          progIndex < progItems.length - 1
+            ? progItems[progIndex + 1]
+            : progItems[progIndex - 1];
+        const progLinks = [];
 
         if (progIndex >= 0) progLinks.push(progItems[progIndex]);
-        if (progNeighborIndex >= 0) progLinks.push(progItems[progNeighborIndex]);
+        if (progNeighbor) progLinks.push(progNeighbor);
 
         // Fill if fewer than 2
-        for (let p of progItems) {
+        for (const p of progItems) {
           if (progLinks.length >= 2) break;
           if (!progLinks.includes(p)) progLinks.push(p);
         }
 
         setPrograms(progLinks);
-
       } catch (err) {
         console.error("Error fetching sponsor or related data:", err);
       } finally {
