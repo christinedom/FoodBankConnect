@@ -169,7 +169,7 @@ const ProgramInstancePage = () => {
             <li><strong>Eligibility:</strong> {program.eligibility || "N/A"}</li>
             <li><strong>Cost:</strong> {program.cost || "N/A"}</li>
             <li>
-              <strong>Sign Up:</strong>{" "}
+              <strong>Website:</strong>{" "}
               {program.sign_up_link ? (
                 <a href={program.sign_up_link} target="_blank" rel="noreferrer">
                   Link
@@ -178,7 +178,6 @@ const ProgramInstancePage = () => {
                 "N/A"
               )}
             </li>
-            <li><strong>About:</strong> {program.about || "No description available."}</li>
           </ul>
         </section>
 
