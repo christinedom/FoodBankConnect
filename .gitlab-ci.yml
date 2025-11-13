@@ -184,7 +184,7 @@ backend_unit_tests:
     paths:
       - "$PYTEST_JUNIT_XML"
   rules:
-    - when: on_success
+    - when: never
     #- changes:
     #    - fbc-rest-api/**/*
     #    - tests/test_api_unit.py

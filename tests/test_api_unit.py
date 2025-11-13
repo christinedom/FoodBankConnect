@@ -19,11 +19,10 @@ def _setup_env(schema="app_ci_test"):
 
 def _import_app():
     # import or reload to pick env
-    if "app" in globals():
-        importlib.reload(globals()["app"])
-    import app  # noqa: E402
-    return app
-
+    if "main" in globals():
+        importlib.reload(globals()["main"])
+    import main  # noqa: E402
+    return main
 
 def _mk_client():
     _setup_env()
